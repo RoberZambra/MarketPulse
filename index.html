@@ -28,9 +28,9 @@
     .shell { display:flex; flex-direction:column; height:100vh; padding:0 clamp(16px,3vw,40px); animation:fadeIn .5s ease both; }
 
     header { display:flex; align-items:center; justify-content:space-between; padding:16px 0 14px; border-bottom:1px solid var(--border); gap:16px; flex-shrink:0; }
-    .logo { display:flex; align-items:center; gap:10px; font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; letter-spacing:-.02em; color:#fff; }
+    .logo { display:flex; align-items:center; gap:10px; font-family:'Syne',sans-serif; font-weight:800; font-size:1.44rem; letter-spacing:-.02em; color:#fff; }
     .logo-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:var(--glow); animation:blink 2.4s ease-in-out infinite; }
-    .badge { font-size:.6rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); border:1px solid rgba(0,229,160,.3); padding:3px 9px; border-radius:4px; }
+    .badge { font-size:.72rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); border:1px solid rgba(0,229,160,.3); padding:3px 9px; border-radius:4px; }
 
     .main-layout { display:grid; grid-template-columns:1fr 400px; gap:16px; flex:1; min-height:0; padding:16px 0; }
 
@@ -45,7 +45,7 @@
 
     .chart-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; color:var(--text-dim); pointer-events:none; user-select:none; padding:40px; text-align:center; }
     .chart-empty-icon { font-size:3.5rem; opacity:.15; }
-    .chart-empty-text { font-size:.75rem; line-height:1.9; opacity:.5; }
+    .chart-empty-text { font-size:.9rem; line-height:1.9; opacity:.5; }
     .chart-empty-text label { pointer-events:all; cursor:pointer; color:var(--accent); opacity:1; text-decoration:underline; }
 
 
@@ -53,23 +53,23 @@
 
 
     .overlay-legend {
-      display:none; position:absolute; bottom:12px; left:12px; z-index:4;
+      display:none; position:absolute; bottom:12px; left:10px; z-index:4;
       flex-direction:column; gap:5px; background:rgba(9,11,15,.9);
       border:1px solid var(--border); border-radius:8px; padding:9px 13px;
       animation:fadeInEl .4s .6s ease both; opacity:0;
     }
     .overlay-legend.show { display:flex; }
-    .legend-row { display:flex; align-items:center; gap:8px; font-size:.6rem; color:var(--text-dim); }
+    .legend-row { display:flex; align-items:center; gap:8px; font-size:.72rem; color:var(--text-dim); }
     .legend-line { width:22px; height:2px; border-radius:1px; }
 
     .chart-toolbar { display:flex; align-items:center; gap:8px; flex-shrink:0; flex-wrap:wrap; }
-    .upload-btn { display:flex; align-items:center; gap:7px; padding:8px 14px; background:rgba(0,229,160,.08); border:1px solid rgba(0,229,160,.3); border-radius:8px; color:var(--accent); font-family:'DM Mono',monospace; font-size:.75rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .upload-btn { display:flex; align-items:center; gap:7px; padding:8px 14px; background:rgba(0,229,160,.08); border:1px solid rgba(0,229,160,.3); border-radius:8px; color:var(--accent); font-family:'DM Mono',monospace; font-size:.9rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
     .upload-btn:hover { background:rgba(0,229,160,.18); border-color:var(--accent); }
     .upload-btn.has-image { background:rgba(0,229,160,.15); border-color:var(--accent); box-shadow:0 0 10px rgba(0,229,160,.12); }
-    .clear-btn { display:none; align-items:center; gap:6px; padding:8px 12px; background:rgba(244,63,94,.06); border:1px solid rgba(244,63,94,.25); border-radius:8px; color:var(--red); font-family:'DM Mono',monospace; font-size:.72rem; cursor:pointer; transition:all .2s; }
+    .clear-btn { display:none; align-items:center; gap:6px; padding:8px 12px; background:rgba(244,63,94,.06); border:1px solid rgba(244,63,94,.25); border-radius:8px; color:var(--red); font-family:'DM Mono',monospace; font-size:.86rem; cursor:pointer; transition:all .2s; }
     .clear-btn:hover { background:rgba(244,63,94,.15); }
-    .img-name { font-size:.63rem; color:var(--text-dim); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .drawing-badge { display:none; align-items:center; gap:6px; padding:6px 12px; background:rgba(0,229,160,.08); border:1px solid rgba(0,229,160,.25); border-radius:6px; font-size:.63rem; color:var(--accent); }
+    .img-name { font-size:.76rem; color:var(--text-dim); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .drawing-badge { display:none; align-items:center; gap:6px; padding:6px 12px; background:rgba(0,229,160,.08); border:1px solid rgba(0,229,160,.25); border-radius:6px; font-size:.76rem; color:var(--accent); }
     .drawing-badge.show { display:flex; animation:slideIn .3s ease both; }
 
     /* ai col */
@@ -90,59 +90,59 @@
     /* fundamentalist box */
     .fund-result { background:var(--surface); border:1px solid rgba(245,158,11,.25); border-radius:10px; overflow:hidden; flex-shrink:0; min-height:120px; }
     .fund-header { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; }
-    .fund-title { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; color:#fff; display:flex; align-items:center; gap:8px; }
-    .fund-icon { width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#f59e0b,#ef4444); display:flex; align-items:center; justify-content:center; font-size:.7rem; flex-shrink:0; }
-    .fund-btn { display:flex; align-items:center; gap:7px; padding:9px 18px; background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(239,68,68,.2)); border:1px solid rgba(245,158,11,.5); border-radius:8px; color:#fcd34d; font-family:'DM Mono',monospace; font-size:.75rem; cursor:pointer; transition:all .2s; letter-spacing:.04em; white-space:nowrap; }
+    .fund-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1.14rem; color:#fff; display:flex; align-items:center; gap:8px; }
+    .fund-icon { width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#f59e0b,#ef4444); display:flex; align-items:center; justify-content:center; font-size:.84rem; flex-shrink:0; }
+    .fund-btn { display:flex; align-items:center; gap:7px; padding:9px 18px; background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(239,68,68,.2)); border:1px solid rgba(245,158,11,.5); border-radius:8px; color:#fcd34d; font-family:'DM Mono',monospace; font-size:.9rem; cursor:pointer; transition:all .2s; letter-spacing:.04em; white-space:nowrap; }
     .fund-btn:hover:not(:disabled) { background:linear-gradient(135deg,rgba(245,158,11,.35),rgba(239,68,68,.35)); border-color:#f59e0b; color:#fef3c7; box-shadow:0 0 20px rgba(245,158,11,.2); }
     .fund-btn:disabled { opacity:.5; cursor:not-allowed; }
     .fund-btn .spin { animation:rotate .8s linear infinite; }
-    .divider-label { font-size:.58rem; letter-spacing:.14em; text-transform:uppercase; color:var(--text-dim); text-align:center; padding:4px 0 2px; display:flex; align-items:center; gap:8px; }
+    .divider-label { font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--text-dim); text-align:center; padding:4px 0 2px; display:flex; align-items:center; gap:8px; }
     .divider-label::before,.divider-label::after { content:''; flex:1; height:1px; background:var(--border); }
 
     .panel-header { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; }
-    .panel-title { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; color:#fff; display:flex; align-items:center; gap:8px; }
-    .ai-icon { width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#8b5cf6,#0ea5e9); display:flex; align-items:center; justify-content:center; font-size:.7rem; flex-shrink:0; }
+    .panel-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1.14rem; color:#fff; display:flex; align-items:center; gap:8px; }
+    .ai-icon { width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#8b5cf6,#0ea5e9); display:flex; align-items:center; justify-content:center; font-size:.84rem; flex-shrink:0; }
 
-    .analyze-btn { display:flex; align-items:center; gap:7px; padding:9px 18px; background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(14,165,233,.2)); border:1px solid rgba(139,92,246,.5); border-radius:8px; color:#c4b5fd; font-family:'DM Mono',monospace; font-size:.75rem; cursor:pointer; transition:all .2s; letter-spacing:.04em; white-space:nowrap; }
+    .analyze-btn { display:flex; align-items:center; gap:7px; padding:9px 18px; background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(14,165,233,.2)); border:1px solid rgba(139,92,246,.5); border-radius:8px; color:#c4b5fd; font-family:'DM Mono',monospace; font-size:.9rem; cursor:pointer; transition:all .2s; letter-spacing:.04em; white-space:nowrap; }
     .analyze-btn:hover:not(:disabled) { background:linear-gradient(135deg,rgba(139,92,246,.35),rgba(14,165,233,.35)); border-color:#a855f7; color:#e9d5ff; box-shadow:0 0 20px rgba(139,92,246,.2); }
     .analyze-btn:disabled { opacity:.5; cursor:not-allowed; }
     .analyze-btn .spin { animation:rotate .8s linear infinite; }
 
     .api-key-section { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; flex-shrink:0; }
-    .api-key-label { font-size:.62rem; letter-spacing:.1em; color:var(--text-dim); text-transform:uppercase; margin-bottom:8px; display:block; }
+    .api-key-label { font-size:.74rem; letter-spacing:.1em; color:var(--text-dim); text-transform:uppercase; margin-bottom:8px; display:block; }
     .api-key-row { display:flex; gap:8px; }
-    .api-key-input { flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:.75rem; padding:8px 12px; border-radius:6px; outline:none; transition:border-color .2s; }
+    .api-key-input { flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:.9rem; padding:8px 12px; border-radius:6px; outline:none; transition:border-color .2s; }
     .api-key-input:focus { border-color:var(--purple); }
     .api-key-input::placeholder { color:var(--text-dim); }
-    .api-key-save { padding:8px 14px; background:rgba(168,85,247,.15); border:1px solid rgba(168,85,247,.4); border-radius:6px; color:#c4b5fd; font-family:'DM Mono',monospace; font-size:.72rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .api-key-save { padding:8px 14px; background:rgba(168,85,247,.15); border:1px solid rgba(168,85,247,.4); border-radius:6px; color:#c4b5fd; font-family:'DM Mono',monospace; font-size:.86rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
     .api-key-save:hover { background:rgba(168,85,247,.3); border-color:#a855f7; }
-    .api-key-note { font-size:.6rem; color:var(--text-dim); margin-top:6px; line-height:1.5; }
+    .api-key-note { font-size:.72rem; color:var(--text-dim); margin-top:6px; line-height:1.5; }
 
-    .upload-hint { font-size:.67rem; color:var(--text-dim); line-height:1.75; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; flex-shrink:0; }
+    .upload-hint { font-size:.8rem; color:var(--text-dim); line-height:1.75; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; flex-shrink:0; }
     .upload-hint strong { color:var(--accent); }
     .upload-hint strong.b2 { color:var(--accent2); }
 
 
     .analysis-placeholder { padding:40px 20px; text-align:center; color:var(--text-dim); }
     .analysis-placeholder-icon { font-size:2.2rem; margin-bottom:12px; opacity:.25; }
-    .analysis-placeholder-text { font-size:.72rem; line-height:1.8; }
+    .analysis-placeholder-text { font-size:.86rem; line-height:1.8; }
 
     .analysis-loading { padding:24px 20px; }
     .loading-bar { height:3px; border-radius:2px; background:linear-gradient(90deg,transparent,#8b5cf6,#0ea5e9,transparent); background-size:200% 100%; animation:shimmer 1.5s infinite; margin-bottom:16px; }
     .loading-lines { display:flex; flex-direction:column; gap:8px; }
     .loading-line { height:10px; border-radius:4px; background:linear-gradient(90deg,var(--border) 25%,rgba(255,255,255,.06) 50%,var(--border) 75%); background-size:200% 100%; animation:shimmer 1.8s infinite; }
     .loading-line:nth-child(2){width:80%} .loading-line:nth-child(3){width:90%} .loading-line:nth-child(4){width:70%}
-    .loading-text { font-size:.7rem; color:var(--purple); margin-bottom:12px; animation:pulse 1.5s ease-in-out infinite; }
+    .loading-text { font-size:.84rem; color:var(--purple); margin-bottom:12px; animation:pulse 1.5s ease-in-out infinite; }
 
     .analysis-content { animation:slideIn .4s ease both; }
     .signal-header { padding:12px 16px 10px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; }
-    .signal-timestamp { font-size:.6rem; color:var(--text-dim); }
-    .signal-badge { font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:4px; }
+    .signal-timestamp { font-size:.72rem; color:var(--text-dim); }
+    .signal-badge { font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:4px; }
     .signal-badge.bullish  { background:rgba(0,229,160,.15);  color:var(--accent);  border:1px solid rgba(0,229,160,.3); }
     .signal-badge.bearish  { background:rgba(244,63,94,.15);  color:var(--red);     border:1px solid rgba(244,63,94,.3); }
     .signal-badge.neutral  { background:rgba(245,158,11,.15); color:var(--gold);    border:1px solid rgba(245,158,11,.3); }
-    .ai-text-result { padding:14px 16px; font-size:.74rem; line-height:1.85; color:var(--text); white-space:pre-wrap; word-break:break-word; }
-    .analysis-disclaimer { padding:10px 16px; font-size:.6rem; color:var(--text-dim); border-top:1px solid var(--border); line-height:1.5; }
+    .ai-text-result { padding:14px 16px; font-size:.88rem; line-height:1.85; color:var(--text); white-space:pre-wrap; word-break:break-word; }
+    .analysis-disclaimer { padding:10px 16px; font-size:.72rem; color:var(--text-dim); border-top:1px solid var(--border); line-height:1.5; }
 
     /* zoom/pan */
     #zoom-container {
@@ -168,7 +168,7 @@
     .zoom-btn {
       width: 30px; height: 30px; border-radius: 6px;
       background: rgba(9,11,15,.85); border: 1px solid rgba(255,255,255,.1);
-      color: var(--text); font-size: .9rem; cursor: pointer;
+      color: var(--text); font-size: 1.08rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all .15s; backdrop-filter: blur(6px);
       font-family: monospace;
@@ -176,18 +176,52 @@
     .zoom-btn:hover { background: rgba(0,229,160,.15); border-color: rgba(0,229,160,.4); color: var(--accent); }
     .zoom-btn:active { transform: scale(.93); }
     .zoom-level {
-      font-size: .55rem; color: var(--text-dim); text-align: center;
+      font-size: .66rem; color: var(--text-dim); text-align: center;
       font-family: 'DM Mono', monospace; letter-spacing: .06em;
       padding: 2px 0;
     }
 
-    footer { padding:10px 0 14px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border); font-size:.6rem; color:var(--text-dim); letter-spacing:.06em; flex-wrap:wrap; gap:8px; flex-shrink:0; }
+    footer { padding:10px 0 14px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border); font-size:.72rem; color:var(--text-dim); letter-spacing:.06em; flex-wrap:wrap; gap:8px; flex-shrink:0; }
     .status-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); margin-right:6px; box-shadow:0 0 8px var(--accent); animation:blink 2.4s ease-in-out infinite; }
 
     @media(max-width:960px) {
-      .main-layout { grid-template-columns:1fr; }
-      .chart-zone { min-height:280px; max-height:45vh; }
-      .ai-col { max-height:55vh; }
+      html, body { height:auto; overflow-y:auto; }
+      .shell { height:auto; min-height:100vh; }
+      .main-layout { grid-template-columns:1fr; height:auto; }
+      .chart-col { min-height:0; }
+      .chart-zone { min-height:300px; max-height:60vw; flex:none; }
+      .ai-col { max-height:none; overflow-y:visible; height:auto; }
+
+      /* Double all font sizes for mobile */
+      .logo                    { font-size:2.88rem; }
+      .badge                   { font-size:1.44rem; }
+      .chart-empty-text        { font-size:1.8rem; }
+      .legend-row              { font-size:1.44rem; }
+      .upload-btn              { font-size:1.8rem; }
+      .clear-btn               { font-size:1.72rem; }
+      .img-name                { font-size:1.52rem; }
+      .drawing-badge           { font-size:1.52rem; }
+      .fund-title              { font-size:2.28rem; }
+      .fund-icon               { font-size:1.68rem; }
+      .fund-btn                { font-size:1.8rem; }
+      .divider-label           { font-size:1.4rem; }
+      .panel-title             { font-size:2.28rem; }
+      .ai-icon                 { font-size:1.68rem; }
+      .analyze-btn             { font-size:1.8rem; }
+      .api-key-label           { font-size:1.48rem; }
+      .api-key-input           { font-size:1.8rem; }
+      .api-key-save            { font-size:1.72rem; }
+      .api-key-note            { font-size:1.44rem; }
+      .upload-hint             { font-size:1.6rem; }
+      .analysis-placeholder-text { font-size:1.72rem; }
+      .loading-text            { font-size:1.68rem; }
+      .signal-timestamp        { font-size:1.44rem; }
+      .signal-badge            { font-size:1.44rem; }
+      .ai-text-result          { font-size:1.76rem; }
+      .analysis-disclaimer     { font-size:1.44rem; }
+      .zoom-btn                { font-size:2.16rem; width:48px; height:48px; }
+      .zoom-level              { font-size:1.32rem; }
+      footer                   { font-size:1.44rem; }
     }
   </style>
 </head>
@@ -535,7 +569,14 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         var m = text.match(/```json\s*([\s\S]*?)```/);
         if (m) {
           try { var p = JSON.parse(m[1].trim()); lines = p.lines || []; } catch(e){}
-          text = text.replace(/```json[\s\S]*?```/, '').trim();
+          // Remove the JSON block AND any preceding PASSO 6 heading/title line
+          text = text.replace(/[^\n]*PASSO\s*6[^\n]*\n?/gi, '');
+          text = text.replace(/```json[\s\S]*?```/g, '');
+          // Remove any leftover fenced code blocks (``` ... ```)
+          text = text.replace(/```[\s\S]*?```/g, '');
+          // Remove lone backtick lines
+          text = text.replace(/^```.*$/gm, '');
+          text = text.trim();
         }
         return { rawText: text, lines: lines };
 
@@ -596,9 +637,10 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
       var scale_f = W / 800;
       var PILL_H = Math.round(18 * scale_f), PILL_PAD = Math.round(8 * scale_f), FONT_SIZE = Math.round(10 * scale_f);
 
-      // Lines start at 50% of image width and go to the right edge
-      var X_START = Math.round(W * 0.50);
-      var X_END   = W - Math.round(4 * scale_f);   // small right margin
+      // Lines: label pill on the LEFT, line starts immediately after the pill and runs to right edge.
+      var MARGIN_LEFT  = Math.round(8 * scale_f);   // gap from left SVG edge to pill
+      var MARGIN_RIGHT = Math.round(8 * scale_f);   // gap from right SVG edge
+      var X_END = W - MARGIN_RIGHT;
 
       lines.forEach(function(line, i) {
         var type  = (line.type || 'suporte').toLowerCase();
@@ -607,28 +649,26 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         var y     = (yPct / 100) * H;
         var delay = (i * 0.1).toFixed(2);
 
-        // ── label pill: calculated first so the line can start after it ──
+        // ── label pill (left side) ──
         var labelText = line.label || cfg.label;
         var charW     = FONT_SIZE * 0.62;
         var approxW   = Math.ceil(labelText.length * charW) + PILL_PAD * 2;
-        var lx = X_START + Math.round(6 * scale_f);
+        var lx = MARGIN_LEFT;
         var ly = y - PILL_H / 2;
-
-        // clamp label vertically inside SVG
         ly = Math.min(Math.max(ly, 2), H - PILL_H - 2);
 
-        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', lx);
-        rect.setAttribute('y', ly);
-        rect.setAttribute('width', approxW);
-        rect.setAttribute('height', PILL_H);
-        rect.setAttribute('rx', Math.round(4 * scale_f));
-        rect.setAttribute('fill', cfg.color + '33');
-        rect.setAttribute('stroke', cfg.color + 'bb');
-        rect.setAttribute('stroke-width', (0.8 * scale_f).toFixed(2));
-        rect.style.opacity = '0';
-        rect.style.animation = 'fadeInEl 0.3s ' + (parseFloat(delay) + 0.45) + 's ease forwards';
-        svg.appendChild(rect);
+        var pillRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        pillRect.setAttribute('x', lx);
+        pillRect.setAttribute('y', ly);
+        pillRect.setAttribute('width', approxW);
+        pillRect.setAttribute('height', PILL_H);
+        pillRect.setAttribute('rx', Math.round(4 * scale_f));
+        pillRect.setAttribute('fill', cfg.color + '33');
+        pillRect.setAttribute('stroke', cfg.color + 'bb');
+        pillRect.setAttribute('stroke-width', (0.8 * scale_f).toFixed(2));
+        pillRect.style.opacity = '0';
+        pillRect.style.animation = 'fadeInEl 0.3s ' + (parseFloat(delay) + 0.45) + 's ease forwards';
+        svg.appendChild(pillRect);
 
         var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         txt.setAttribute('x', lx + PILL_PAD);
@@ -642,25 +682,23 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         txt.style.animation = 'fadeInEl 0.3s ' + (parseFloat(delay) + 0.45) + 's ease forwards';
         svg.appendChild(txt);
 
-        // ── animated line: starts at the right edge of the pill, not behind it ──
-        var LINE_GAP  = Math.round(6 * scale_f);   // small gap between pill and line
-        var lineX1    = lx + approxW + LINE_GAP;
-        var lineX2    = X_END;
-        var curLineLen = Math.max(lineX2 - lineX1 + 20, 1);
-        if (lineX1 >= lineX2) return; // no room — skip line
+        // ── animated line: starts right after the pill ──
+        var X_START = lx + approxW + Math.round(4 * scale_f);
+        var lineLen = X_END - X_START + 20;
+        if (lineLen < 10) lineLen = 10;
 
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        el.setAttribute('x1', lineX1);
+        el.setAttribute('x1', X_START);
         el.setAttribute('y1', y);
-        el.setAttribute('x2', lineX2);
+        el.setAttribute('x2', X_END);
         el.setAttribute('y2', y);
         el.setAttribute('stroke', cfg.color);
         el.setAttribute('stroke-width', (cfg.width * scale_f).toFixed(2));
         el.setAttribute('stroke-opacity', '0.92');
-        el.setAttribute('stroke-dasharray', cfg.dash || (curLineLen + ' ' + curLineLen));
-        el.setAttribute('stroke-dashoffset', curLineLen);
+        el.setAttribute('stroke-dasharray', cfg.dash || (lineLen + ' ' + lineLen));
+        el.setAttribute('stroke-dashoffset', lineLen);
         el.style.animation = 'drawLine 0.5s ' + delay + 's ease forwards';
-        el.style.setProperty('--len', curLineLen);
+        el.style.setProperty('--len', lineLen);
         svg.appendChild(el);
 
         // legend
@@ -974,27 +1012,72 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
 
   function renderFundResult(text) {
     var now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-    var isBullish = /subvalorizado|crescimento forte|resultado positivo|compra|alta|bullish|recomendado/i.test(text);
-    var isBearish = /sobrevalorizado|queda|prejuízo|venda|bearish|risco alto/i.test(text);
+
+    // Extract JSON block if present
+    var fundData = null;
+    var mj = text.match(/```json\s*([\s\S]*?)```/);
+    if (mj) {
+      try { fundData = JSON.parse(mj[1].trim()); } catch(e){}
+      text = text.replace(/```json[\s\S]*?```/g, '').replace(/^```.*$/gm,'').trim();
+    }
+
+    var bias = (fundData && fundData.vies) ? fundData.vies.toLowerCase() : '';
+    var isBullish = /positivo|subvalorizado|compra|alta|bullish/.test(bias) || /subvalorizado|crescimento forte|resultado positivo|compra|alta|bullish|recomendado/i.test(text);
+    var isBearish = /negativo|sobrevalorizado|venda|bearish/.test(bias) || /sobrevalorizado|queda|prej\u00edzo|venda|bearish|risco alto/i.test(text);
     var biasTag = isBullish
-      ? '<span class="signal-badge bullish">↑ Fundamentos Positivos</span>'
+      ? '<span class="signal-badge bullish">\u2191 Fundamentos Positivos</span>'
       : isBearish
-        ? '<span class="signal-badge bearish">↓ Fundamentos Negativos</span>'
-        : '<span class="signal-badge neutral">→ Fundamentos Neutros</span>';
+        ? '<span class="signal-badge bearish">\u2193 Fundamentos Negativos</span>'
+        : '<span class="signal-badge neutral">\u2192 Fundamentos Neutros</span>';
+
+    // Metrics cards
+    var metricsHtml = '';
+    if (fundData && fundData.metricas) {
+      var mc = fundData.metricas;
+      var cards = [
+        { label:'P/L',         value:mc.pl,         hint:'Pre\u00e7o / Lucro' },
+        { label:'P/VP',        value:mc.pvp,         hint:'Pre\u00e7o / Valor Patrimonial' },
+        { label:'EV/EBITDA',   value:mc.ev_ebitda,   hint:'Enterprise Value / EBITDA' },
+        { label:'ROE',         value:mc.roe,         hint:'Retorno sobre Patrim\u00f4nio' },
+        { label:'ROA',         value:mc.roa,         hint:'Retorno sobre Ativos' },
+        { label:'Div. Yield',  value:mc.dy,          hint:'Dividend Yield' },
+        { label:'Margem Op.',  value:mc.margem_op,   hint:'Margem Operacional' },
+        { label:'D\u00edv./EBITDA', value:mc.div_ebitda, hint:'Alavancagem' },
+        { label:'Mkt Cap',     value:mc.mkt_cap,     hint:'Valor de Mercado' },
+        { label:'Setor',       value:mc.setor,       hint:'Setor de atua\u00e7\u00e3o' },
+      ].filter(function(c){ return c.value !== undefined && c.value !== null && c.value !== ''; });
+
+      if (cards.length > 0) {
+        metricsHtml =
+          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:6px;padding:12px 14px 8px;border-bottom:1px solid rgba(245,158,11,.15);">' +
+          cards.map(function(c){
+            return '<div title="'+c.hint+'" style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:8px;padding:8px 10px;">' +
+              '<div style="font-size:.58rem;letter-spacing:.09em;color:var(--text-dim);text-transform:uppercase;margin-bottom:3px;">'+c.label+'</div>' +
+              '<div style="font-size:.94rem;font-weight:600;color:#fcd34d;font-family:\'Syne\',sans-serif;word-break:break-word;">'+c.value+'</div>' +
+            '</div>';
+          }).join('') +
+          '</div>';
+      }
+    }
+
     var formatted = text
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
-      .replace(/^([A-ZÁÉÍÓÚÀÃÕÂÊÎÔÛÇ][A-ZÁÉÍÓÚÀÃÕÂÊÎÔÛÇ\s\/\-—0-9]+:)$/gm,
+      .replace(/^([A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00c0\u00c3\u00d5\u00c2\u00ca\u00ce\u00d4\u00db\u00c7][A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00c0\u00c3\u00d5\u00c2\u00ca\u00ce\u00d4\u00db\u00c7\s\/\-\u20140-9]+:)$/gm,
         '<div style="font-size:.6rem;letter-spacing:.12em;color:var(--gold);margin:14px 0 4px;font-family:\'Syne\',sans-serif;font-weight:700;border-bottom:1px solid rgba(245,158,11,.2);padding-bottom:3px;">$1</div>')
       .replace(/\n/g, '<br>');
+
     document.getElementById('fund-result').innerHTML =
       '<div class="analysis-content">' +
         '<div class="signal-header" style="border-color:rgba(245,158,11,.2)">' +
-          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + biasTag + '<span class="signal-badge" style="background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.3);">🏦 FUNDAMENTALISTA</span></div>' +
-          '<span class="signal-timestamp">Analisado às ' + now + '</span>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + biasTag +
+          (fundData && fundData.ticker ? '<span class="signal-badge" style="background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.4);font-size:.78rem;letter-spacing:.06em;">' + fundData.ticker + '</span>' : '') +
+          '<span class="signal-badge" style="background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.3);">\U0001f3e6 FUNDAMENTALISTA</span></div>' +
+          '<span class="signal-timestamp">Analisado \u00e0s ' + now + '</span>' +
         '</div>' +
+        metricsHtml +
         '<div class="ai-text-result">' + formatted + '</div>' +
-        '<div class="analysis-disclaimer">⚠️ Análise fundamentalista gerada por IA. Não constitui recomendação de investimento. Sempre verifique as fontes primárias.</div>' +
+        '<div class="analysis-disclaimer">\u26a0\ufe0f An\u00e1lise gerada por IA com dados estimados. Verifique nas fontes prim\u00e1rias (RI, CVM, Bloomberg). N\u00e3o constitui recomenda\u00e7\u00e3o de investimento.</div>' +
       '</div>';
   }
 
@@ -1002,24 +1085,76 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
     var visionModels = MODELS.filter(function(m){ return m.indexOf('flash') !== -1 || m.indexOf('pro') !== -1; });
     if (visionModels.length === 0) visionModels = MODELS;
 
-    var prompt = `Você é um analista fundamentalista especialista em mercado financeiro. Analise a imagem deste gráfico de trading.
+    var prompt = `Você é um analista fundamentalista sênior especializado em mercado financeiro. Analise a imagem deste gráfico de trading.
 
 PASSO 1 — IDENTIFIQUE O ATIVO:
-Observe o gráfico e identifique o ticker/nome do ativo (ex: PETR4, VALE3, AAPL, BTC, etc.). Se não conseguir identificar com certeza, informe.
+Observe o gráfico com atenção e identifique o ticker exato (ex: PETR4, VALE3, AAPL, BTC/USD, WEGE3, etc.), nome da empresa/ativo e setor de atuação.
 
-PASSO 2 — ANÁLISE FUNDAMENTALISTA COMPLETA:
-Com base no seu conhecimento sobre o ativo identificado, analise:
-- Valuation (P/L, P/VP, EV/EBITDA estimado)
-- Saúde financeira (endividamento, liquidez, fluxo de caixa)
-- Rentabilidade (ROE, ROA, margens operacionais)
-- Dividend yield e política de dividendos
-- Perspectivas e catalisadores (macro, setor, empresa)
-- Riscos fundamentalistas relevantes
+PASSO 2 — MÉTRICAS FUNDAMENTALISTAS COM VALORES REAIS:
+Forneça os valores numéricos mais recentes disponíveis no seu conhecimento (indique o período, ex: "TTM", "2024", "2023"):
 
-PASSO 3 — CONCLUSÃO:
-Resuma se os fundamentos sugerem ativo subvalorizado, justo ou sobrevalorizado, e o viés (positivo, neutro ou negativo) para o médio/longo prazo.
+VALUATION:
+- P/L (Preço/Lucro): valor numérico (ex: 7,2x)
+- P/VP (Preço/Valor Patrimonial): valor numérico (ex: 1,8x)
+- EV/EBITDA: valor numérico (ex: 4,5x)
+- Preço atual aproximado e valor intrínseco estimado
 
-Responda em português do Brasil. Use seções com TÍTULOS EM MAIÚSCULAS. Seja objetivo e direto.`;
+RENTABILIDADE:
+- ROE (%): valor numérico (ex: 22,4%)
+- ROA (%): valor numérico
+- Margem EBITDA (%): valor numérico
+- Margem Líquida (%): valor numérico
+- Receita líquida anual: valor em R$ bilhões ou US$ bilhões
+
+SAÚDE FINANCEIRA:
+- Dívida Líquida/EBITDA: valor numérico (ex: 1,2x)
+- Liquidez corrente: valor numérico
+- Fluxo de Caixa Livre (FCF): valor aproximado
+
+DIVIDENDOS:
+- Dividend Yield (%): valor numérico (ex: 8,5%)
+- Payout ratio (%): valor numérico
+- Histórico de pagamentos: regular, irregular ou sem dividendos
+
+PASSO 3 — ANÁLISE QUALITATIVA:
+- Vantagens competitivas (moat) do negócio
+- Catalisadores de curto/médio prazo
+- Riscos fundamentalistas principais (regulatório, macro, concorrência, etc.)
+- Comparação com pares do setor (múltiplos dos concorrentes se souber)
+
+PASSO 4 — VEREDICTO FINAL:
+- Classificação: SUBVALORIZADO / JUSTO / SOBREVALORIZADO
+- Viés: POSITIVO / NEUTRO / NEGATIVO
+- Upside/Downside estimado em % em relação ao valor intrínseco
+- Horizonte recomendado: curto / médio / longo prazo
+
+Após a análise em texto, inclua OBRIGATORIAMENTE este bloco JSON com as métricas principais:
+
+\`\`\`json
+{
+  "ticker": "XXXX",
+  "vies": "positivo",
+  "metricas": {
+    "pl": "7,2x",
+    "pvp": "1,8x",
+    "ev_ebitda": "4,5x",
+    "roe": "22,4%",
+    "roa": "8,1%",
+    "dy": "8,5%",
+    "margem_op": "31,2%",
+    "div_ebitda": "1,2x",
+    "mkt_cap": "R$ 420 bi",
+    "setor": "Petróleo & Gás"
+  }
+}
+\`\`\`
+
+INSTRUÇÕES CRÍTICAS:
+- Use SEMPRE valores numéricos reais — NUNCA escreva "N/D" ou deixe campos vazios sem tentar estimar
+- Se não tiver o valor exato, forneça a melhor estimativa e indique "(est.)"
+- Responda em português do Brasil
+- Use seções com TÍTULOS EM MAIÚsCULAS
+- Seja direto, objetivo e rico em dados concretos`;
 
     var lastErr = null;
     for (var mi = 0; mi < visionModels.length; mi++) {
@@ -1034,7 +1169,7 @@ Responda em português do Brasil. Use seções com TÍTULOS EM MAIÚSCULAS. Seja
                 { inline_data: { mime_type: chartImageMime, data: chartImageBase64 } },
                 { text: prompt }
               ]}],
-              generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
+              generationConfig: { temperature: 0.2, maxOutputTokens: 4096 }
             })
           }
         );
@@ -1055,6 +1190,8 @@ Responda em português do Brasil. Use seções com TÍTULOS EM MAIÚSCULAS. Seja
     }
     throw lastErr || new Error('Todos os modelos falharam.');
   }
+
+
 </script>
 </body>
 </html>
