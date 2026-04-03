@@ -803,8 +803,8 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         txt.style.animation = 'fadeInEl 0.3s ' + (parseFloat(delay) + 0.45) + 's ease forwards';
         svg.appendChild(txt);
 
-        // ── animated line: starts right after the pill ──
-        var X_START = lx + approxW + Math.round(4 * scale_f);
+        // ── animated line: starts at the horizontal midpoint of the chart ──
+        var X_START = Math.round(W * 0.50);
         var lineLen = X_END - X_START + 20;
         if (lineLen < 10) lineLen = 10;
 
@@ -1206,7 +1206,7 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
   function showMarketLoading() {
     document.getElementById('market-result').innerHTML =
       '<div class="analysis-loading">' +
-        '<div class="loading-text" style="color:#7dd3fc;">🌐 Gemini analisando o contexto de mercado...</div>' +
+        '<div class="loading-text" style="color:#7dd3fc;">🌐 Identificando ativo e buscando notícias...</div>' +
         '<div class="loading-bar" style="background:linear-gradient(90deg,transparent,#0ea5e9,#6366f1,transparent)"></div>' +
         '<div class="loading-lines">' +
           '<div class="loading-line"></div><div class="loading-line"></div>' +
@@ -1306,79 +1306,30 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
   }
 
   // ── Market Analysis Gemini call ───────────────────────────────────────────────
+  // Step 1: identify ticker from chart image
+  // Step 2: run grounded web-search analysis on the identified asset (no image)
   async function runMarketAnalysisGemini(key) {
     var visionModels = MODELS.filter(function(m){ return m.indexOf('flash') !== -1 || m.indexOf('pro') !== -1; });
     if (visionModels.length === 0) visionModels = MODELS;
 
-    var prompt = `Você é um estrategista de mercado sênior com visão macro e setorial. Analise a imagem deste gráfico de trading.
-
-PASSO 1 — IDENTIFIQUE O ATIVO E CONTEXTO:
-- Identifique o ticker exato, setor e classe de ativo (ação, crypto, commodity, índice, FII, etc.)
-- Qual bolsa/exchange está sendo negociado (B3, NYSE, NASDAQ, Binance, etc.)
-
-PASSO 2 — SENTIMENTO DE MERCADO:
-- Sentimento atual: POSITIVO / NEUTRO / NEGATIVO
-- Score de sentimento (0 = pânico extremo, 100 = euforia extrema)
-- Fear & Greed implícito pelo comportamento do preço
-- Comportamento do volume (confirmação ou divergência)
-
-PASSO 3 — CONTEXTO MACRO E SETORIAL:
-- Como o cenário macroeconômico atual (juros, inflação, câmbio, PIB) impacta este ativo
-- Desempenho do setor vs mercado amplo (outperform / underperform / inline)
-- Correlação com índices de referência (Ibovespa, S&P500, Nasdaq, DXY, etc.)
-- Fluxo de capital estrangeiro e institucional estimado
-
-PASSO 4 — CATALISADORES E RISCOS DE MERCADO:
-- Principais catalisadores próximos (earnings, dividendos, decisão de juros, eventos regulatórios)
-- Riscos de mercado relevantes (macro, geopolítico, regulatório, setorial)
-- Eventos de agenda que podem mover o ativo nos próximos dias/semanas
-
-PASSO 5 — COMPARAÇÃO SETORIAL:
-- Como o ativo se posiciona frente aos principais pares e concorrentes
-- Rotação setorial em andamento: capital está entrando ou saindo do setor?
-- Ativos correlacionados a monitorar
-
-PASSO 6 — INSIGHTS E OPORTUNIDADES:
-- Insights pouco óbvios ou contra-intuitivos sobre o ativo/setor
-- Possíveis movimentos de "smart money" (grandes players) visíveis no gráfico
-- Assimetrias de risco/retorno no contexto de mercado atual
-
-PASSO 7 — VEREDICTO MACRO:
-- Viés macro: CONSTRUTIVO / NEUTRO / CAUTELOSO
-- Janela de oportunidade: imediata / semanas / meses
-- Principais variáveis a monitorar
-
-Após a análise em texto, inclua OBRIGATORIAMENTE este bloco JSON:
-
-\`\`\`json
+    // ── STEP 1: identify the asset from the chart image ──────────────────────
+    var identifyPrompt = `Observe este gráfico de trading e responda APENAS com um objeto JSON puro, sem markdown, sem explicações.
+O JSON deve ter exatamente estes campos:
 {
-  "ticker": "XXXX",
-  "sentimento": "positivo",
-  "score_sentimento": 65,
-  "macro": {
-    "tendencia": "Altista",
-    "volatilidade": "Média",
-    "volume": "Acima da média",
-    "setor": "Energia",
-    "correlacao": "Positiva c/ Ibov",
-    "fluxo": "Entrada estrangeira",
-    "juros_macro": "Ciclo de corte",
-    "catalisador": "Resultado T3 em 10 dias"
-  }
+  "ticker": "código exato do ativo (ex: PETR4, VALE3, AAPL, BTC/USD)",
+  "nome": "nome completo da empresa ou ativo",
+  "setor": "setor de atuação",
+  "bolsa": "bolsa ou exchange (B3, NYSE, NASDAQ, Binance, etc.)",
+  "classe": "tipo: ação, crypto, commodity, índice, FII, ETF, etc."
 }
-\`\`\`
+Se não conseguir identificar com certeza, use sua melhor estimativa baseada nos elementos visíveis no gráfico.`;
 
-INSTRUÇÕES CRÍTICAS:
-- Seja objetivo, direto e rico em dados concretos
-- Use SEMPRE estimativas numéricas quando possível — nunca deixe em branco
-- Traga insights diferenciados, além do óbvio
-- Responda em português do Brasil
-- Use seções com TÍTULOS EM MAIÚSCULAS`;
-
+    var ticker = null, assetInfo = null;
     var lastErr = null;
+
     for (var mi = 0; mi < visionModels.length; mi++) {
       try {
-        var resp = await fetch(
+        var r1 = await fetch(
           GEMINI_BASE + '/models/' + visionModels[mi] + ':generateContent?key=' + key,
           {
             method: 'POST',
@@ -1386,32 +1337,158 @@ INSTRUÇÕES CRÍTICAS:
             body: JSON.stringify({
               contents: [{ parts: [
                 { inline_data: { mime_type: chartImageMime, data: chartImageBase64 } },
-                { text: prompt }
+                { text: identifyPrompt }
               ]}],
-              generationConfig: { temperature: 0.25, maxOutputTokens: 4096 }
+              generationConfig: { temperature: 0.1, maxOutputTokens: 256 }
             })
           }
         );
-        if (!resp.ok) {
-          var ed = await resp.json().catch(function(){ return {}; });
-          throw new Error((ed.error && ed.error.message) || 'HTTP ' + resp.status);
-        }
-        var res  = await resp.json();
-        var text = res.candidates && res.candidates[0] && res.candidates[0].content &&
-                   res.candidates[0].content.parts && res.candidates[0].content.parts[0] &&
-                   res.candidates[0].content.parts[0].text;
-        if (!text) throw new Error('Resposta vazia.');
-        return text;
+        if (!r1.ok) { var ed1 = await r1.json().catch(function(){ return {}; }); throw new Error((ed1.error && ed1.error.message) || 'HTTP ' + r1.status); }
+        var d1   = await r1.json();
+        var raw1 = d1.candidates && d1.candidates[0] && d1.candidates[0].content &&
+                   d1.candidates[0].content.parts && d1.candidates[0].content.parts[0] &&
+                   d1.candidates[0].content.parts[0].text;
+        if (!raw1) throw new Error('Resposta vazia na identificação.');
+        var clean1 = raw1.replace(/```json|```/g,'').trim();
+        assetInfo  = JSON.parse(clean1);
+        ticker     = assetInfo.ticker || 'desconhecido';
+        break;
       } catch(e) {
         lastErr = e;
         if (e.message && (e.message.includes('API_KEY_INVALID') || e.message.includes('API key not valid'))) throw e;
       }
     }
-    throw lastErr || new Error('Todos os modelos falharam.');
+
+    if (!ticker) throw lastErr || new Error('Não foi possível identificar o ativo.');
+
+    // ── STEP 2: grounded market/news analysis — NO image, web search enabled ──
+    var hoje = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+    var assetDesc = ticker + (assetInfo && assetInfo.nome ? ' (' + assetInfo.nome + ')' : '') +
+                   (assetInfo && assetInfo.setor ? ', setor: ' + assetInfo.setor : '') +
+                   (assetInfo && assetInfo.bolsa ? ', ' + assetInfo.bolsa : '');
+
+    var marketPrompt = `Hoje é ${hoje}. Você é um estrategista de mercado sênior. Faça uma análise completa e atualizada do ativo: ${assetDesc}.
+
+USE A FERRAMENTA DE BUSCA NA WEB para obter informações recentes e atuais antes de responder. Busque por:
+- Notícias recentes sobre ${ticker} e ${assetInfo && assetInfo.nome ? assetInfo.nome : ticker}
+- Desempenho recente do setor ${assetInfo && assetInfo.setor ? assetInfo.setor : ''}
+- Contexto macroeconômico atual que impacta este ativo
+- Eventos corporativos recentes (resultados, dividendos, guidance, M&A)
+- Sentimento atual de analistas e mercado
+
+ESTRUTURE SUA RESPOSTA COM ESTAS SEÇÕES:
+
+SENTIMENTO E MOMENTO DE MERCADO:
+- Sentimento atual baseado nas últimas notícias e fluxo
+- Score de sentimento (0 = pânico, 100 = euforia) com justificativa
+- Momentum recente (alta/baixa nas últimas semanas)
+
+NOTÍCIAS E EVENTOS RELEVANTES:
+- Principais notícias recentes que afetam o ativo (com datas)
+- Eventos corporativos recentes ou próximos
+- Mudanças em ratings ou recomendações de analistas
+
+CONTEXTO MACRO E SETORIAL:
+- Impacto do cenário macro atual (juros, inflação, câmbio, commodities)
+- Como o setor ${assetInfo && assetInfo.setor ? assetInfo.setor : 'do ativo'} está performando
+- Correlações relevantes com índices e pares setoriais
+
+CATALISADORES E RISCOS:
+- Catalisadores de curto prazo (1-4 semanas)
+- Riscos imediatos a monitorar
+- Agenda de eventos (earnings, ex-dividendo, decisões regulatórias)
+
+POSICIONAMENTO E FLUXO:
+- Fluxo institucional / estrangeiro estimado
+- Rotação setorial em curso
+- Como o ativo se compara aos pares no momento atual
+
+VEREDICTO DE MERCADO:
+- Viés: CONSTRUTIVO / NEUTRO / CAUTELOSO
+- Janela de oportunidade: imediata / semanas / meses
+- As 3 principais variáveis a acompanhar
+
+Após a análise, inclua OBRIGATORIAMENTE este bloco JSON:
+
+\`\`\`json
+{
+  "ticker": "${ticker}",
+  "sentimento": "positivo",
+  "score_sentimento": 65,
+  "macro": {
+    "tendencia": "Altista",
+    "volatilidade": "Média",
+    "volume": "Acima da média",
+    "setor": "${assetInfo && assetInfo.setor ? assetInfo.setor : 'N/D'}",
+    "correlacao": "Positiva c/ Ibov",
+    "fluxo": "Entrada estrangeira",
+    "juros_macro": "Ciclo de corte",
+    "catalisador": "descreva o principal catalisador identificado"
+  }
+}
+\`\`\`
+
+INSTRUÇÕES CRÍTICAS:
+- BASE SUA ANÁLISE em dados e notícias REAIS e RECENTES obtidos pela busca — não em inferências do gráfico
+- Cite as fontes das notícias quando relevante (ex: "Segundo Valor Econômico, ...")
+- Use estimativas numéricas concretas sempre que possível
+- Responda em português do Brasil
+- Use TÍTULOS EM MAIÚSCULAS para cada seção`;
+
+    // Try with Google Search grounding first (gemini-2.0-flash supports it)
+    var searchModels = ['gemini-2.0-flash', 'gemini-2.0-flash-001', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    // Filter to only models available
+    var availableSearch = searchModels.filter(function(m) {
+      return MODELS.some(function(am){ return am === m || am.indexOf(m) !== -1; });
+    });
+    if (availableSearch.length === 0) availableSearch = visionModels;
+
+    for (var si = 0; si < availableSearch.length; si++) {
+      try {
+        var body2 = {
+          contents: [{ parts: [{ text: marketPrompt }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 4096 }
+        };
+
+        var r2 = await fetch(
+          GEMINI_BASE + '/models/' + availableSearch[si] + ':generateContent?key=' + key,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body2)
+          }
+        );
+
+        // If this model doesn't support grounding, fallback to plain text
+        if (r2.status === 400 || r2.status === 404) {
+          var body2b = {
+            contents: [{ parts: [{ text: marketPrompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 4096 }
+          };
+          r2 = await fetch(
+            GEMINI_BASE + '/models/' + availableSearch[si] + ':generateContent?key=' + key,
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body2b) }
+          );
+        }
+
+        if (!r2.ok) { var ed2 = await r2.json().catch(function(){ return {}; }); throw new Error((ed2.error && ed2.error.message) || 'HTTP ' + r2.status); }
+        var d2  = await r2.json();
+        // Collect all text parts (grounding may split into multiple parts)
+        var parts2 = d2.candidates && d2.candidates[0] && d2.candidates[0].content && d2.candidates[0].content.parts;
+        var text2  = parts2 ? parts2.map(function(p){ return p.text || ''; }).join('') : '';
+        if (!text2) throw new Error('Resposta vazia na análise de mercado.');
+        return text2;
+      } catch(e) {
+        lastErr = e;
+        if (e.message && (e.message.includes('API_KEY_INVALID') || e.message.includes('API key not valid'))) throw e;
+      }
+    }
+    throw lastErr || new Error('Todos os modelos falharam na análise de mercado.');
   }
 
-
-</script>
+  // ── Fundamental Analysis Gemini call ─────────────────────────────────────────
+  async function runFundamentalAnalysisGemini(key) {
     var visionModels = MODELS.filter(function(m){ return m.indexOf('flash') !== -1 || m.indexOf('pro') !== -1; });
     if (visionModels.length === 0) visionModels = MODELS;
 
