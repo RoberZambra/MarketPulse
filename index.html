@@ -313,23 +313,42 @@
           <div class="ai-icon">✦</div>
           Análise por IA
         </div>
-        <button class="analyze-btn" id="analyze-btn" onclick="runAnalysis()">
-          <span id="btn-icon">✦</span>
-          <span id="btn-text">Analisar</span>
-        </button>
       </div>
 
       <div class="api-key-section">
-        <label class="api-key-label">Gemini API Key</label>
+        <label class="api-key-label">Gemini API Key — Chave 1</label>
         <div class="api-key-row">
           <input type="password" class="api-key-input" id="gemini-key" placeholder="AIza..." autocomplete="off"/>
           <button class="api-key-save" onclick="saveKey()">Salvar</button>
         </div>
-        <div class="api-key-note">Chave necessária para análise via Google Gemini. Obtenha grátis em <strong>aistudio.google.com</strong></div>
+        <div style="margin-top:10px;">
+          <label class="api-key-label" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            Gemini API Key — Chave 2
+            <span style="font-size:.66rem;color:var(--accent);border:1px solid rgba(0,229,160,.3);border-radius:3px;padding:1px 5px;letter-spacing:.06em;">FALLBACK</span>
+          </label>
+          <div class="api-key-row">
+            <input type="password" class="api-key-input" id="gemini-key-2" placeholder="AIza... (opcional)" autocomplete="off"/>
+            <button class="api-key-save" onclick="saveKey2()">Salvar</button>
+          </div>
+        </div>
+        <div class="api-key-note" style="margin-top:8px;">Se a cota da Chave 1 esgotar, a Chave 2 será usada automaticamente. Obtenha chaves grátis em <strong>aistudio.google.com</strong></div>
       </div>
 
       <div class="upload-hint">
         Envie um print do gráfico — a IA identificará o timeframe, classificará como <strong>intraday</strong> ou <strong class="b2">longo prazo</strong> e desenhará automaticamente as linhas de <strong>suporte</strong>, <strong>resistência</strong>, <strong>entrada</strong>, <strong>alvos</strong> e <strong>stop</strong> sobre a imagem.
+      </div>
+
+      <div class="divider-label">📈 análise técnica</div>
+
+      <div class="panel-header">
+        <div class="panel-title" style="font-size:.95rem;">
+          <div class="ai-icon" style="width:20px;height:20px;font-size:.78rem;">✦</div>
+          Técnica
+        </div>
+        <button class="analyze-btn" id="analyze-btn" onclick="runTechAnalysisOnly()">
+          <span id="btn-icon">✦</span>
+          <span id="btn-text">Analisar</span>
+        </button>
       </div>
 
       <div class="analysis-result" id="analysis-result">
@@ -400,16 +419,22 @@
   var chartImageBase64 = null;
   var chartImageMime   = 'image/png';
   var geminiKey        = '';
+  var geminiKey2       = '';   // chave de fallback
   var MODELS           = [];
+  var MODELS2          = [];   // cache de modelos para chave 2
   var GEMINI_BASE      = 'https://generativelanguage.googleapis.com/v1beta';
 
   // ── Persistence ──────────────────────────────────────────────────────────────
-  function saveApiKey(k) { try { localStorage.setItem('mp_gemini_key', k); } catch(e){} }
-  function loadApiKey()  { try { return localStorage.getItem('mp_gemini_key') || ''; } catch(e){ return ''; } }
+  function saveApiKey(k)  { try { localStorage.setItem('mp_gemini_key',  k); } catch(e){} }
+  function saveApiKey2(k) { try { localStorage.setItem('mp_gemini_key2', k); } catch(e){} }
+  function loadApiKey()   { try { return localStorage.getItem('mp_gemini_key')  || ''; } catch(e){ return ''; } }
+  function loadApiKey2()  { try { return localStorage.getItem('mp_gemini_key2') || ''; } catch(e){ return ''; } }
 
   (function init() {
-    var k = loadApiKey();
-    if (k) { geminiKey = k; document.getElementById('gemini-key').value = k; }
+    var k  = loadApiKey();
+    var k2 = loadApiKey2();
+    if (k)  { geminiKey  = k;  document.getElementById('gemini-key').value   = k; }
+    if (k2) { geminiKey2 = k2; document.getElementById('gemini-key-2').value = k2; }
   })();
 
   function saveKey() {
@@ -421,6 +446,59 @@
       inp.style.borderColor = '#00e5a0';
       setTimeout(function(){ inp.style.borderColor = ''; }, 1200);
     }
+  }
+
+  function saveKey2() {
+    var inp = document.getElementById('gemini-key-2');
+    geminiKey2 = inp.value.trim();
+    MODELS2.length = 0;
+    if (geminiKey2) {
+      saveApiKey2(geminiKey2);
+      inp.style.borderColor = '#00e5a0';
+      setTimeout(function(){ inp.style.borderColor = ''; }, 1200);
+    }
+  }
+
+  function getKeySlots() {
+    var k1 = geminiKey  || document.getElementById('gemini-key').value.trim();
+    var k2 = geminiKey2 || document.getElementById('gemini-key-2').value.trim();
+    var slots = [];
+    if (k1) slots.push({ key: k1, models: MODELS  });
+    if (k2) slots.push({ key: k2, models: MODELS2 });
+    return slots;
+  }
+
+  async function ensureSlotModels(slot) {
+    if (slot.models.length === 0) {
+      var disc = await fetchAvailableModels(slot.key);
+      disc.forEach(function(m){ slot.models.push(m); });
+    }
+  }
+
+  function isQuotaError(msg) {
+    return msg.includes('QUOTA') || msg.includes('quota') ||
+           msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
+  }
+  function isKeyError(msg) {
+    return msg.includes('API_KEY_INVALID') || msg.includes('API key not valid');
+  }
+
+  async function withKeyFallback(fn) {
+    var slots = getKeySlots();
+    if (slots.length === 0) throw new Error('NO_KEY');
+    var lastErr = null;
+    for (var i = 0; i < slots.length; i++) {
+      try {
+        await ensureSlotModels(slots[i]);
+        return await fn(slots[i].key, slots[i].models);
+      } catch(e) {
+        lastErr = e;
+        var msg = e.message || '';
+        if (isQuotaError(msg) || isKeyError(msg)) continue;
+        throw e;
+      }
+    }
+    throw lastErr || new Error('Todas as chaves falharam.');
   }
 
   // ── Image handling ───────────────────────────────────────────────────────────
@@ -479,7 +557,47 @@
     document.getElementById('drawing-badge').className = 'drawing-badge';
   }
 
-  // ── Main analysis (all 3 async) ───────────────────────────────────────────────
+  // ── Tech-only analysis (button in Técnica panel) ──────────────────────────────
+  async function runTechAnalysisOnly() {
+    var slots = getKeySlots();
+    if (slots.length === 0) { showError('Insira sua chave da API do Gemini para continuar.'); return; }
+    if (!chartImageBase64)  { showError('Carregue o print do gráfico primeiro.'); return; }
+
+    var btn     = document.getElementById('analyze-btn');
+    var btnIcon = document.getElementById('btn-icon');
+    var btnText = document.getElementById('btn-text');
+    btn.disabled = true;
+    btnIcon.textContent = '◌'; btnIcon.className = 'spin';
+    btnText.textContent = 'Analisando...';
+    showLoading();
+    clearOverlay();
+
+    try {
+      var result = await withKeyFallback(function(key, models) {
+        return runImageAnalysis(key, models);
+      });
+      renderResult(result);
+      if (result.lines && result.lines.length > 0) drawOverlay(result.lines);
+    } catch(err) {
+      var msg = err.message || 'Erro desconhecido';
+      if (msg === 'NO_KEY')
+        showError('Insira pelo menos uma chave da API do Gemini.');
+      else if (isKeyError(msg))
+        showError('Chave(s) API inválida(s). Verifique em aistudio.google.com');
+      else if (isQuotaError(msg))
+        showError('⏳ Cota esgotada em todas as chaves.<br>Aguarde ou adicione uma segunda chave acima.');
+      else if (msg.includes('Failed to fetch') || msg.includes('NetworkError'))
+        showError('Erro de conexão. Verifique sua internet.');
+      else
+        showError('Erro: ' + msg);
+    } finally {
+      btn.disabled = false;
+      btnIcon.textContent = '✶'; btnIcon.className = '';
+      btnText.textContent = 'Analisar';
+    }
+  }
+
+  // ── Combined analysis (kept for reference, no longer called from UI) ──────────
   async function runAnalysis() {
     var key = geminiKey || document.getElementById('gemini-key').value.trim();
     if (!key)              { showError('Insira sua chave da API do Gemini para continuar.'); return; }
@@ -556,49 +674,64 @@
 
   // Individual panel buttons
   async function runFundAnalysisOnly() {
-    var key = geminiKey || document.getElementById('gemini-key').value.trim();
-    if (!key)              { alert('Insira sua chave API do Gemini primeiro.'); return; }
-    if (!chartImageBase64) { alert('Carregue o print do gráfico primeiro.'); return; }
-    geminiKey = key;
+    var slots = getKeySlots();
+    if (slots.length === 0) { alert('Insira sua chave API do Gemini primeiro.'); return; }
+    if (!chartImageBase64)  { alert('Carregue o print do gráfico primeiro.'); return; }
     var btn = document.getElementById('fund-btn');
     var icon = document.getElementById('fund-btn-icon');
     var txt  = document.getElementById('fund-btn-text');
     btn.disabled = true; icon.className = 'spin'; icon.textContent = '◌'; txt.textContent = 'Analisando...';
     showFundLoading();
-    if (MODELS.length === 0) {
-      var disc = await fetchAvailableModels(key);
-      disc.forEach(function(m){ MODELS.push(m); });
-    }
     try {
-      var text = await runFundamentalAnalysisGemini(key);
+      var text = await withKeyFallback(function(key, models) {
+        return runFundamentalAnalysisGemini(key, models);
+      });
       renderFundResult(text);
-    } catch(e) { showFundError('Erro: ' + (e.message || 'Erro desconhecido')); }
+    } catch(e) {
+      var _m = e.message || '';
+      if (_m === 'NO_KEY') showFundError('Insira pelo menos uma chave API.');
+      else if (isQuotaError(_m)) showFundError('⏳ Cota esgotada em todas as chaves. Aguarde ou adicione uma segunda chave acima.');
+      else if (isKeyError(_m)) showFundError('Chave(s) API inválida(s). Verifique em aistudio.google.com');
+      else showFundError('Erro: ' + _m);
+    }
     finally { btn.disabled = false; icon.className = ''; icon.textContent = '◈'; txt.textContent = 'Analisar'; }
   }
 
   async function runMarketAnalysis() {
-    var key = geminiKey || document.getElementById('gemini-key').value.trim();
-    if (!key)              { alert('Insira sua chave API do Gemini primeiro.'); return; }
-    if (!chartImageBase64) { alert('Carregue o print do gráfico primeiro.'); return; }
-    geminiKey = key;
+    var slots = getKeySlots();
+    if (slots.length === 0) { alert('Insira sua chave API do Gemini primeiro.'); return; }
+    if (!chartImageBase64)  { alert('Carregue o print do gráfico primeiro.'); return; }
     var btn = document.getElementById('market-btn');
     var icon = document.getElementById('market-btn-icon');
     var txt  = document.getElementById('market-btn-text');
     btn.disabled = true; icon.className = 'spin'; icon.textContent = '◌'; txt.textContent = 'Analisando...';
     showMarketLoading();
-    if (MODELS.length === 0) {
-      var disc = await fetchAvailableModels(key);
-      disc.forEach(function(m){ MODELS.push(m); });
-    }
     try {
-      var text = await runMarketAnalysisGemini(key);
+      var text = await withKeyFallback(function(key, models) {
+        return runMarketAnalysisGemini(key, models);
+      });
       renderMarketResult(text);
-    } catch(e) { showMarketError('Erro: ' + (e.message || 'Erro desconhecido')); }
+    } catch(e) {
+      var _msg = e.message || 'Erro desconhecido';
+      var _friendly;
+      if (_msg === 'NO_KEY')
+        _friendly = 'Insira pelo menos uma chave API.';
+      else if (isKeyError(_msg))
+        _friendly = '🔑 Chave(s) API inválida(s). Verifique em <strong>aistudio.google.com</strong>';
+      else if (isQuotaError(_msg))
+        _friendly = '⏳ Cota esgotada em todas as chaves configuradas.<br><br>Aguarde alguns minutos e tente novamente, ou adicione uma segunda chave acima.';
+      else if (_msg.includes('Failed to fetch') || _msg.includes('NetworkError'))
+        _friendly = '📡 Erro de conexão. Verifique sua internet e tente novamente.';
+      else
+        _friendly = '⚠️ ' + _msg;
+      showMarketError(_friendly);
+    }
     finally { btn.disabled = false; icon.className = ''; icon.textContent = '◈'; txt.textContent = 'Analisar'; }
   }
 
   // ── Gemini Vision call ────────────────────────────────────────────────────────
-  async function runImageAnalysis(key) {
+  async function runImageAnalysis(key, models) {
+    if (!models || models.length === 0) models = MODELS;
     var prompt = `Você é um analista técnico especialista em mercado financeiro. Analise a imagem deste gráfico de trading.
 
 PASSO 1 — IDENTIFIQUE O TIMEFRAME:
@@ -1040,7 +1173,7 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
     document.getElementById('analysis-result').innerHTML =
       '<div class="analysis-placeholder">' +
         '<div class="analysis-placeholder-icon">⚠️</div>' +
-        '<div class="analysis-placeholder-text" style="color:#f43f5e">' + msg + '</div>' +
+        '<div class="analysis-placeholder-text" style="color:#f43f5e;line-height:1.7">' + msg + '</div>' +
       '</div>';
   }
 
@@ -1308,8 +1441,9 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
   // ── Market Analysis Gemini call ───────────────────────────────────────────────
   // Step 1: identify ticker from chart image
   // Step 2: run grounded web-search analysis on the identified asset (no image)
-  async function runMarketAnalysisGemini(key) {
-    var visionModels = MODELS.filter(function(m){ return m.indexOf('flash') !== -1 || m.indexOf('pro') !== -1; });
+  async function runMarketAnalysisGemini(key, models) {
+    if (!models || models.length === 0) models = MODELS;
+    var visionModels = models.filter(function(m){ return m.indexOf('flash') !== -1 || m.indexOf('pro') !== -1; });
     if (visionModels.length === 0) visionModels = MODELS;
 
     // ── STEP 1: identify the asset from the chart image ──────────────────────
@@ -1488,8 +1622,9 @@ INSTRUÇÕES CRÍTICAS:
   }
 
   // ── Fundamental Analysis Gemini call ─────────────────────────────────────────
-  async function runFundamentalAnalysisGemini(key) {
-    var visionModels = MODELS.filter(function(m){ return m.indexOf('flash') !== -1 || m.indexOf('pro') !== -1; });
+  async function runFundamentalAnalysisGemini(key, models) {
+    if (!models || models.length === 0) models = MODELS;
+    var visionModels = models.filter(function(m){ return m.indexOf('flash') !== -1 || m.indexOf('pro') !== -1; });
     if (visionModels.length === 0) visionModels = MODELS;
 
     var prompt = `Você é um analista fundamentalista sênior especializado em mercado financeiro. Analise a imagem deste gráfico de trading.
