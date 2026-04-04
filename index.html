@@ -493,9 +493,9 @@
         return await fn(slots[i].key, slots[i].models);
       } catch(e) {
         lastErr = e;
-        var msg = e.message || '';
-        if (isQuotaError(msg) || isKeyError(msg)) continue;
-        throw e;
+        var msg = e.message || "";
+        if (msg === "NO_KEY") throw e;
+        continue;
       }
     }
     throw lastErr || new Error('Todas as chaves falharam.');
@@ -719,7 +719,7 @@
       else if (isKeyError(_msg))
         _friendly = '🔑 Chave(s) API inválida(s). Verifique em <strong>aistudio.google.com</strong>';
       else if (isQuotaError(_msg))
-        _friendly = '⏳ Cota esgotada em todas as chaves configuradas.<br><br>Aguarde alguns minutos e tente novamente, ou adicione uma segunda chave acima.';
+        _friendly = '⏳ Cota esgotada em todas as chaves.<br><br>A análise Mercado &amp; Macro usa busca na web e consome mais cota. Aguarde 1-2 minutos e tente novamente.';
       else if (_msg.includes('Failed to fetch') || _msg.includes('NetworkError'))
         _friendly = '📡 Erro de conexão. Verifique sua internet e tente novamente.';
       else
@@ -755,20 +755,11 @@ PASSO 5 — CONCLUSÃO:
 Resuma destacando se é INTRADAY ou LONGO PRAZO e o viés dominante (altista, baixista ou neutro).
 
 PASSO 6 — LINHAS TÉCNICAS JSON (OBRIGATÓRIO):
-Após a análise em texto, inclua EXATAMENTE este bloco JSON para desenhar as linhas sobre a imagem.
-
-Instruções para calcular y_pct com MÁXIMA PRECISÃO:
-1. Observe a imagem completa. Identifique:
-   - chart_top_pct: % do topo da imagem até onde começa a área de PREÇOS (ex: barra de título ocupa ~5% → chart_top_pct=5)
-   - chart_bot_pct: % do topo da imagem até onde TERMINA a área de preços (ex: se há RSI/MACD abaixo, eles podem ocupar os últimos 30% → chart_bot_pct=68)
-   - price_max: o preço mais alto visível no eixo Y da área de preços
-   - price_min: o preço mais baixo visível no eixo Y da área de preços
-2. Para cada linha, calcule:
-   y_pct = chart_top_pct + (price_max - nivel_preco) / (price_max - price_min) * (chart_bot_pct - chart_top_pct)
-3. Exemplo real: chart_top_pct=5, chart_bot_pct=68, price_max=84, price_min=81. Stop em 81.80:
-   y_pct = 5 + (84 - 81.80) / (84 - 81) * 63 = 5 + 2.20/3*63 ≈ 51
-4. Inclua os campos "chart_top_pct", "chart_bot_pct", "price_max", "price_min" no JSON para referência.
-5. Use de 4 a 7 linhas. Tipos: "suporte", "resistencia", "entrada", "tp", "sl", "media"
+Após a análise, inclua este bloco JSON. Calcule y_pct assim:
+- chart_top_pct: % do topo até onde começam os preços (ex: 5)
+- chart_bot_pct: % do topo até onde terminam os preços (ex: 68, excluindo RSI/MACD)
+- y_pct = chart_top_pct + (price_max - nivel) / (price_max - price_min) * (chart_bot_pct - chart_top_pct)
+- Use 4 a 7 linhas. Tipos: "suporte", "resistencia", "entrada", "tp", "sl", "media"
 
 \`\`\`json
 {
@@ -804,7 +795,7 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
                 { inline_data: { mime_type: chartImageMime, data: chartImageBase64 } },
                 { text: prompt }
               ]}],
-              generationConfig: { temperature: 0.15, maxOutputTokens: 4096 }
+              generationConfig: { temperature: 0.15, maxOutputTokens: 8192 }
             })
           }
         );
@@ -813,10 +804,16 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
           throw new Error((ed.error && ed.error.message) || 'HTTP ' + resp.status);
         }
         var res  = await resp.json();
-        var text = res.candidates && res.candidates[0] && res.candidates[0].content &&
-                   res.candidates[0].content.parts && res.candidates[0].content.parts[0] &&
-                   res.candidates[0].content.parts[0].text;
+        var candidate = res.candidates && res.candidates[0];
+        var text = candidate && candidate.content &&
+                   candidate.content.parts && candidate.content.parts[0] &&
+                   candidate.content.parts[0].text;
         if (!text) throw new Error('Resposta vazia.');
+        // If response was cut by token limit, still use the partial text
+        var finishReason = candidate && candidate.finishReason;
+        if (finishReason === 'MAX_TOKENS') {
+          console.warn('[TechAnalysis] Resposta cortada por MAX_TOKENS, usando texto parcial.');
+        }
 
         // extract lines JSON
         var lines = [];
@@ -891,10 +888,10 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
       var scale_f = W / 800;
       var PILL_H = Math.round(18 * scale_f), PILL_PAD = Math.round(8 * scale_f), FONT_SIZE = Math.round(10 * scale_f);
 
-      // Lines: label pill on the LEFT, line starts immediately after the pill and runs to right edge.
-      var MARGIN_LEFT  = Math.round(8 * scale_f);   // gap from left SVG edge to pill
+      // Lines: label pill CENTERED horizontally, line starts right after pill and runs to right edge.
       var MARGIN_RIGHT = Math.round(8 * scale_f);   // gap from right SVG edge
       var X_END = W - MARGIN_RIGHT;
+      var CENTER_X = Math.round(W * 0.50);           // horizontal center of the image
 
       lines.forEach(function(line, i) {
         var type  = (line.type || 'suporte').toLowerCase();
@@ -903,11 +900,12 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         var y     = (yPct / 100) * H;
         var delay = (i * 0.1).toFixed(2);
 
-        // ── label pill (left side) ──
+        // ── label pill (centered) ──
         var labelText = line.label || cfg.label;
         var charW     = FONT_SIZE * 0.62;
         var approxW   = Math.ceil(labelText.length * charW) + PILL_PAD * 2;
-        var lx = MARGIN_LEFT;
+        // Center the pill around CENTER_X
+        var lx = CENTER_X - Math.round(approxW / 2);
         var ly = y - PILL_H / 2;
         ly = Math.min(Math.max(ly, 2), H - PILL_H - 2);
 
@@ -936,9 +934,9 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         txt.style.animation = 'fadeInEl 0.3s ' + (parseFloat(delay) + 0.45) + 's ease forwards';
         svg.appendChild(txt);
 
-        // ── animated line: starts at the horizontal midpoint of the chart ──
-        var X_START = Math.round(W * 0.50);
-        var lineLen = X_END - X_START + 20;
+        // ── animated line: starts immediately after the pill, runs to right edge ──
+        var X_START = lx + approxW + Math.round(4 * scale_f);
+        var lineLen = X_END - X_START;
         if (lineLen < 10) lineLen = 10;
 
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -1458,6 +1456,10 @@ O JSON deve ter exatamente estes campos:
 }
 Se não conseguir identificar com certeza, use sua melhor estimativa baseada nos elementos visíveis no gráfico.`;
 
+    // Exclude gemini-2.5-pro from market analysis (returns 400 on these requests)
+    visionModels = visionModels.filter(function(m){ return m.indexOf('2.5-pro') === -1; });
+    if (visionModels.length === 0) visionModels = MODELS;
+
     var ticker = null, assetInfo = null;
     var lastErr = null;
 
@@ -1569,16 +1571,21 @@ INSTRUÇÕES CRÍTICAS:
 - Responda em português do Brasil
 - Use TÍTULOS EM MAIÚSCULAS para cada seção`;
 
-    // Try with Google Search grounding first (gemini-2.0-flash supports it)
-    var searchModels = ['gemini-2.0-flash', 'gemini-2.0-flash-001', 'gemini-1.5-flash', 'gemini-1.5-pro'];
-    // Filter to only models available
-    var availableSearch = searchModels.filter(function(m) {
-      return MODELS.some(function(am){ return am === m || am.indexOf(m) !== -1; });
+    // Use flash models for market analysis (2.5-pro returns 400 on plain text requests)
+    // Prefer flash models that support grounding; exclude 2.5-pro
+    var flashModels = MODELS.filter(function(m) {
+      return m.indexOf('flash') !== -1 && m.indexOf('2.5') === -1;
     });
-    if (availableSearch.length === 0) availableSearch = visionModels;
+    // If no flash models found, use any non-2.5-pro model
+    var availableSearch = flashModels.length > 0 ? flashModels : MODELS.filter(function(m) {
+      return m.indexOf('2.5-pro') === -1 && m.indexOf('gemini-2.5-pro') === -1;
+    });
+    // Last resort: use all models
+    if (availableSearch.length === 0) availableSearch = MODELS;
 
     for (var si = 0; si < availableSearch.length; si++) {
       try {
+        // First try WITH Google Search grounding
         var body2 = {
           contents: [{ parts: [{ text: marketPrompt }] }],
           tools: [{ google_search: {} }],
@@ -1594,8 +1601,10 @@ INSTRUÇÕES CRÍTICAS:
           }
         );
 
-        // If this model doesn't support grounding, fallback to plain text
-        if (r2.status === 400 || r2.status === 404) {
+        // Grounding not supported or not available (400, 403, 404, 429) — retry WITHOUT grounding
+        if (!r2.ok) {
+          var statusWithGrounding = r2.status;
+          console.warn('[MarketMacro] grounding falhou status=' + statusWithGrounding + ', tentando sem grounding...');
           var body2b = {
             contents: [{ parts: [{ text: marketPrompt }] }],
             generationConfig: { temperature: 0.2, maxOutputTokens: 4096 }
@@ -1615,9 +1624,11 @@ INSTRUÇÕES CRÍTICAS:
         return text2;
       } catch(e) {
         lastErr = e;
+        console.error('[MarketMacro] modelo=' + availableSearch[si] + ' erro=' + e.message);
         if (e.message && (e.message.includes('API_KEY_INVALID') || e.message.includes('API key not valid'))) throw e;
       }
     }
+    console.error('[MarketMacro] lastErr:', lastErr && lastErr.message);
     throw lastErr || new Error('Todos os modelos falharam na análise de mercado.');
   }
 
