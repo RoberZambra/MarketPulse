@@ -173,6 +173,7 @@
     #chart-img { display: none; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }
     #overlay-svg { display: none; position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none; overflow: visible; }
 
+    /* ── Zoom + overlay toolbar (right side, vertical) ─────────────────── */
     .zoom-toolbar {
       display: none; position: absolute; top: 10px; right: 10px; z-index: 10;
       flex-direction: column; gap: 4px; animation: fadeInEl .3s ease both;
@@ -193,6 +194,28 @@
       font-family: 'DM Mono', monospace; letter-spacing: .06em;
       padding: 2px 0;
     }
+    /* divider between zoom and overlay toggle buttons */
+    .toolbar-divider {
+      height: 1px; background: rgba(255,255,255,.08); margin: 2px 0; border-radius: 1px;
+    }
+    /* toggle buttons in toolbar — same shape as zoom-btn but colored */
+    .zoom-btn.toggle-lines {
+      border-color: rgba(0,229,160,.35); color: var(--accent); font-size: .56rem;
+      letter-spacing: .01em; line-height: 1.2;
+    }
+    .zoom-btn.toggle-lines.off { border-color: rgba(244,63,94,.4); color: var(--red); }
+    .zoom-btn.toggle-candles {
+      border-color: rgba(168,85,247,.35); color: #d8b4fe; font-size: .56rem;
+      letter-spacing: .01em; line-height: 1.2;
+    }
+    .zoom-btn.toggle-candles.off { border-color: rgba(244,63,94,.4); color: var(--red); }
+    /* drag handle — same width as toolbar buttons */
+    .zoom-btn.drag-lines {
+      border-color: rgba(0,229,160,.28); color: var(--text-dim); font-size: .72rem;
+      cursor: ns-resize; display: none;
+    }
+    .zoom-btn.drag-lines.show { display: flex; }
+    .zoom-btn.drag-lines:hover { color: var(--accent); border-color: rgba(0,229,160,.5); }
 
     footer { padding:10px 0 14px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border); font-size:.72rem; color:var(--text-dim); letter-spacing:.06em; flex-wrap:wrap; gap:8px; flex-shrink:0; }
     .status-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); margin-right:6px; box-shadow:0 0 8px var(--accent); animation:blink 2.4s ease-in-out infinite; }
@@ -286,11 +309,23 @@
           </div>
         </div>
         <div class="overlay-legend" id="overlay-legend"></div>
+
         <div class="zoom-toolbar" id="zoom-toolbar">
           <button class="zoom-btn" id="zoom-in-btn" title="Aumentar zoom">+</button>
           <span class="zoom-level" id="zoom-level-label">100%</span>
           <button class="zoom-btn" id="zoom-out-btn" title="Diminuir zoom">−</button>
           <button class="zoom-btn" id="zoom-reset-btn" title="Resetar zoom (ou duplo clique)" style="font-size:.65rem;">⊡</button>
+          <!-- Divider + overlay toggles (shown after analysis) -->
+          <div class="toolbar-divider" id="overlay-divider" style="display:none;"></div>
+          <button class="zoom-btn toggle-lines" id="lines-toggle-btn" title="Mostrar/ocultar linhas técnicas" onclick="toggleLinesLayer()" style="display:none;font-size:.58rem;line-height:1.15;padding:2px;">
+            <span id="lines-toggle-icon">〰</span>
+          </button>
+          <button class="zoom-btn toggle-candles" id="candles-toggle-btn" title="Mostrar/ocultar candles simulados" onclick="toggleCandlesLayer()" style="display:none;font-size:.72rem;padding:2px;">
+            <span id="candles-toggle-icon">🕯</span>
+          </button>
+          <button class="zoom-btn drag-lines" id="lines-drag-handle" title="Arraste para mover todas as linhas ↑↓" style="display:none;font-size:.82rem;">
+            ⇕
+          </button>
         </div>
       </div>
 
@@ -555,6 +590,17 @@
     leg.className = 'overlay-legend';
     leg.innerHTML = '';
     document.getElementById('drawing-badge').className = 'drawing-badge';
+    // Hide overlay toolbar items
+    var divider = document.getElementById('overlay-divider');
+    var ltb     = document.getElementById('lines-toggle-btn');
+    var ctb     = document.getElementById('candles-toggle-btn');
+    var handle  = document.getElementById('lines-drag-handle');
+    if (divider) divider.style.display = 'none';
+    if (ltb)    { ltb.style.display = 'none'; ltb.classList.remove('off'); }
+    if (ctb)    { ctb.style.display = 'none'; ctb.classList.remove('off'); }
+    if (handle)   handle.style.display = 'none';
+    // Reset layer state
+    _linesVisible = true; _candlesVisible = true; _linesOffsetPct = 0;
   }
 
   // ── Tech-only analysis (button in Técnica panel) ──────────────────────────────
@@ -755,11 +801,17 @@ PASSO 5 — CONCLUSÃO:
 Resuma destacando se é INTRADAY ou LONGO PRAZO e o viés dominante (altista, baixista ou neutro).
 
 PASSO 6 — LINHAS TÉCNICAS JSON (OBRIGATÓRIO):
-Após a análise, inclua este bloco JSON. Calcule y_pct assim:
-- chart_top_pct: % do topo até onde começam os preços (ex: 5)
-- chart_bot_pct: % do topo até onde terminam os preços (ex: 68, excluindo RSI/MACD)
-- y_pct = chart_top_pct + (price_max - nivel) / (price_max - price_min) * (chart_bot_pct - chart_top_pct)
-- Use 4 a 7 linhas. Tipos: "suporte", "resistencia", "entrada", "tp", "sl", "media"
+Após a análise, inclua este bloco JSON. Siga as instruções abaixo com máxima precisão:
+
+COMO CALCULAR y_pct (% da altura total da imagem a partir do TOPO):
+1. Identifique chart_top_pct: borda superior da área de preços (abaixo da toolbar do TradingView, geralmente 5-10%)
+2. Identifique chart_bot_pct: borda inferior da área de preços (acima de painéis de RSI/MACD, geralmente 60-75%)
+3. Leia price_max e price_min nos eixos do gráfico (valores reais visíveis)
+4. Para cada nível: y_pct = chart_top_pct + (price_max - nivel) / (price_max - price_min) * (chart_bot_pct - chart_top_pct)
+
+ATENÇÃO: y_pct deve ser consistente com chart_top_pct e chart_bot_pct. Todos os y_pct de linhas de preço devem ficar ENTRE chart_top_pct e chart_bot_pct.
+
+Use 4 a 7 linhas. Tipos: "suporte", "resistencia", "entrada", "tp", "sl", "media"
 
 \`\`\`json
 {
@@ -819,7 +871,19 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         var lines = [];
         var m = text.match(/```json\s*([\s\S]*?)```/);
         if (m) {
-          try { var p = JSON.parse(m[1].trim()); lines = p.lines || []; } catch(e){}
+          try {
+            var p = JSON.parse(m[1].trim());
+            lines = p.lines || [];
+            // Attach chart bounds so candle renderer can use them
+            if (p.chart_top_pct != null || p.chart_bot_pct != null) {
+              lines._chartBounds = {
+                chart_top_pct: p.chart_top_pct,
+                chart_bot_pct: p.chart_bot_pct,
+                price_max:     p.price_max,
+                price_min:     p.price_min
+              };
+            }
+          } catch(e){}
           // Remove the JSON block AND any preceding PASSO 6 heading/title line
           text = text.replace(/[^\n]*PASSO\s*6[^\n]*\n?/gi, '');
           text = text.replace(/```json[\s\S]*?```/g, '');
@@ -860,7 +924,80 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
     media:       { color: '#a855f7', dash: '10,5',  label: 'Média Móvel', width: 1.6 },
   };
 
+  // ── Layer visibility state ────────────────────────────────────────────────────
+  var _linesVisible   = true;
+  var _candlesVisible = true;
+  var _linesOffsetPct = 0;  // % offset applied to all lines group (drag)
+  var _lastAnalysisLines = [];
+
+  function toggleLinesLayer() {
+    _linesVisible = !_linesVisible;
+    var grp    = document.getElementById('svg-lines-group');
+    var btn    = document.getElementById('lines-toggle-btn');
+    var handle = document.getElementById('lines-drag-handle');
+    if (grp)    grp.style.display = _linesVisible ? '' : 'none';
+    if (btn)  { btn.classList.toggle('off', !_linesVisible); btn.title = _linesVisible ? 'Ocultar linhas técnicas' : 'Mostrar linhas técnicas'; }
+    if (handle) handle.style.display = _linesVisible ? 'flex' : 'none';
+  }
+
+  function toggleCandlesLayer() {
+    _candlesVisible = !_candlesVisible;
+    var grp = document.getElementById('svg-candles-group');
+    var btn = document.getElementById('candles-toggle-btn');
+    if (grp) grp.style.display = _candlesVisible ? '' : 'none';
+    if (btn) { btn.classList.toggle('off', !_candlesVisible); btn.title = _candlesVisible ? 'Ocultar candles simulados' : 'Mostrar candles simulados'; }
+  }
+
+  // ── Drag handle: move lines group up/down ─────────────────────────────────────
+  (function initLinesDrag() {
+    var svgRef = null, linesGrp = null, dragging = false;
+    var startY = 0, startOffset = 0;
+
+    function onMouseDown(e) {
+      if (e.button !== 0) return;
+      dragging = true; startY = e.clientY; startOffset = _linesOffsetPct;
+      e.preventDefault();
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    }
+    function onTouchStart(e) {
+      dragging = true; startY = e.touches[0].clientY; startOffset = _linesOffsetPct;
+      e.preventDefault();
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd);
+    }
+    function applyOffset(dy) {
+      if (!svgRef || !linesGrp) return;
+      // dispH is the rendered pixel height of the SVG element
+      var dispH = parseFloat(svgRef.getAttribute('height')) || 1;
+      // viewBox height
+      var viewH = svgRef.viewBox.baseVal.height || dispH;
+      // dy is in screen pixels; convert to viewBox units
+      var deltaVB = dy * (viewH / dispH);
+      _linesOffsetPct = Math.max(-viewH * 0.45, Math.min(viewH * 0.45, startOffset + deltaVB));
+      linesGrp.setAttribute('transform', 'translate(0,' + _linesOffsetPct + ')');
+    }
+    function onMouseMove(e) { if (dragging) applyOffset(e.clientY - startY); }
+    function onMouseUp()    { dragging = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); }
+    function onTouchMove(e) { if (dragging) { e.preventDefault(); applyOffset(e.touches[0].clientY - startY); } }
+    function onTouchEnd()   { dragging = false; document.removeEventListener('touchmove', onTouchMove); document.removeEventListener('touchend', onTouchEnd); }
+
+    // Wait for the handle to exist in the DOM
+    function hookHandle() {
+      var h = document.getElementById('lines-drag-handle');
+      if (!h) { setTimeout(hookHandle, 300); return; }
+      h.addEventListener('mousedown',  onMouseDown);
+      h.addEventListener('touchstart', onTouchStart, { passive: false });
+    }
+    hookHandle();
+
+    // expose so drawOverlay can set refs after each redraw
+    window._initLinesDragRefs = function(svgEl, grp) { svgRef = svgEl; linesGrp = grp; _linesOffsetPct = 0; };
+  })();
+
   function drawOverlay(lines) {
+    _lastAnalysisLines = lines;
+    _linesOffsetPct    = 0;   // reset drag offset on each new draw
     var img  = document.getElementById('chart-img');
     var svg  = document.getElementById('overlay-svg');
     var leg  = document.getElementById('overlay-legend');
@@ -874,8 +1011,6 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
       var dispH = img.clientHeight;
       if (dispW === 0 || dispH === 0) { setTimeout(doRender, 100); return; }
 
-      // Use natural dimensions for viewBox so coordinates map 1:1 with actual pixels
-      // CSS width/height match the rendered size — SVG will scale via viewBox automatically
       svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
       svg.setAttribute('width', dispW);
       svg.setAttribute('height', dispH);
@@ -883,15 +1018,28 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
       svg.style.height = dispH + 'px';
       svg.innerHTML = '';
 
-      var seenTypes = {};
-      // Scale pill/font to natural image size so they look right after viewBox scaling
-      var scale_f = W / 800;
-      var PILL_H = Math.round(18 * scale_f), PILL_PAD = Math.round(8 * scale_f), FONT_SIZE = Math.round(10 * scale_f);
+      // ── Group 1: technical lines (draggable) ──
+      var linesGrp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      linesGrp.setAttribute('id', 'svg-lines-group');
+      if (!_linesVisible) linesGrp.style.display = 'none';
+      svg.appendChild(linesGrp);
 
-      // Lines: label pill CENTERED horizontally, line starts right after pill and runs to right edge.
-      var MARGIN_RIGHT = Math.round(8 * scale_f);   // gap from right SVG edge
-      var X_END = W - MARGIN_RIGHT;
-      var CENTER_X = Math.round(W * 0.50);           // horizontal center of the image
+      // ── Group 2: simulated candles ──
+      var candlesGrp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      candlesGrp.setAttribute('id', 'svg-candles-group');
+      if (!_candlesVisible) candlesGrp.style.display = 'none';
+      svg.appendChild(candlesGrp);
+
+      if (window._initLinesDragRefs) window._initLinesDragRefs(svg, linesGrp);
+
+      var seenTypes = {};
+      var scale_f   = W / 800;
+      var PILL_H    = Math.round(18 * scale_f);
+      var PILL_PAD  = Math.round(8  * scale_f);
+      var FONT_SIZE = Math.round(10 * scale_f);
+      var MARGIN_RIGHT = Math.round(8 * scale_f);
+      var X_END    = W - MARGIN_RIGHT;
+      var CENTER_X = Math.round(W * 0.50);
 
       lines.forEach(function(line, i) {
         var type  = (line.type || 'suporte').toLowerCase();
@@ -900,27 +1048,23 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         var y     = (yPct / 100) * H;
         var delay = (i * 0.1).toFixed(2);
 
-        // ── label pill (centered) ──
         var labelText = line.label || cfg.label;
         var charW     = FONT_SIZE * 0.62;
         var approxW   = Math.ceil(labelText.length * charW) + PILL_PAD * 2;
-        // Center the pill around CENTER_X
         var lx = CENTER_X - Math.round(approxW / 2);
         var ly = y - PILL_H / 2;
         ly = Math.min(Math.max(ly, 2), H - PILL_H - 2);
 
         var pillRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        pillRect.setAttribute('x', lx);
-        pillRect.setAttribute('y', ly);
-        pillRect.setAttribute('width', approxW);
-        pillRect.setAttribute('height', PILL_H);
+        pillRect.setAttribute('x', lx); pillRect.setAttribute('y', ly);
+        pillRect.setAttribute('width', approxW); pillRect.setAttribute('height', PILL_H);
         pillRect.setAttribute('rx', Math.round(4 * scale_f));
         pillRect.setAttribute('fill', cfg.color + '33');
         pillRect.setAttribute('stroke', cfg.color + 'bb');
         pillRect.setAttribute('stroke-width', (0.8 * scale_f).toFixed(2));
         pillRect.style.opacity = '0';
         pillRect.style.animation = 'fadeInEl 0.3s ' + (parseFloat(delay) + 0.45) + 's ease forwards';
-        svg.appendChild(pillRect);
+        linesGrp.appendChild(pillRect);
 
         var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         txt.setAttribute('x', lx + PILL_PAD);
@@ -932,18 +1076,15 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         txt.textContent = labelText;
         txt.style.opacity = '0';
         txt.style.animation = 'fadeInEl 0.3s ' + (parseFloat(delay) + 0.45) + 's ease forwards';
-        svg.appendChild(txt);
+        linesGrp.appendChild(txt);
 
-        // ── animated line: starts immediately after the pill, runs to right edge ──
         var X_START = lx + approxW + Math.round(4 * scale_f);
         var lineLen = X_END - X_START;
         if (lineLen < 10) lineLen = 10;
 
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        el.setAttribute('x1', X_START);
-        el.setAttribute('y1', y);
-        el.setAttribute('x2', X_END);
-        el.setAttribute('y2', y);
+        el.setAttribute('x1', X_START); el.setAttribute('y1', y);
+        el.setAttribute('x2', X_END);   el.setAttribute('y2', y);
         el.setAttribute('stroke', cfg.color);
         el.setAttribute('stroke-width', (cfg.width * scale_f).toFixed(2));
         el.setAttribute('stroke-opacity', '0.92');
@@ -951,9 +1092,8 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         el.setAttribute('stroke-dashoffset', lineLen);
         el.style.animation = 'drawLine 0.5s ' + delay + 's ease forwards';
         el.style.setProperty('--len', lineLen);
-        svg.appendChild(el);
+        linesGrp.appendChild(el);
 
-        // legend
         if (!seenTypes[type]) {
           seenTypes[type] = true;
           var row = document.createElement('div');
@@ -971,17 +1111,35 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
         }
       });
 
+      // ── Draw simulated lilac candles ──────────────────────────────────────────
+      // Pass the parsed chart bounds if available (stored on lines array by runImageAnalysis)
+      drawSimulatedCandles(candlesGrp, lines, W, H, scale_f, lines._chartBounds || null);
+
       // inject keyframes if needed
       if (!document.getElementById('overlay-kf')) {
         var s = document.createElement('style');
         s.id = 'overlay-kf';
-        s.textContent = '@keyframes drawLine { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } } @keyframes fadeInEl { from{opacity:0} to{opacity:1} }';
+        s.textContent = [
+          '@keyframes drawLine { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }',
+          '@keyframes fadeInEl { from{opacity:0} to{opacity:1} }',
+          '@keyframes candleRise { from{opacity:0;transform:scaleY(0)} to{opacity:1;transform:scaleY(1)} }'
+        ].join(' ');
         document.head.appendChild(s);
       }
 
       svg.style.display = 'block';
       leg.className = 'overlay-legend show';
       document.getElementById('drawing-badge').className = 'drawing-badge show';
+
+      // Reveal the overlay toggle buttons + drag handle inside zoom-toolbar
+      var divider = document.getElementById('overlay-divider');
+      var ltb     = document.getElementById('lines-toggle-btn');
+      var ctb     = document.getElementById('candles-toggle-btn');
+      var handle  = document.getElementById('lines-drag-handle');
+      if (divider) divider.style.display = '';
+      if (ltb)    { ltb.style.display = 'flex'; ltb.classList.remove('off'); }
+      if (ctb)    { ctb.style.display = 'flex'; ctb.classList.remove('off'); }
+      if (handle) { handle.style.display = _linesVisible ? 'flex' : 'none'; }
 
       // Keep SVG display dimensions in sync with rendered image size on resize
       if (window._overlayResizeObs) window._overlayResizeObs.disconnect();
@@ -998,6 +1156,237 @@ Responda em português do Brasil. Use seções com títulos em MAIÚSCULAS.`;
     }
 
     requestAnimationFrame(doRender);
+  }
+
+  // ── Simulated lilac candles ───────────────────────────────────────────────────
+  // Auto-calibrates to the chart image regardless of layout/resolution.
+  // chartBounds: { chart_top_pct, chart_bot_pct, price_max, price_min } from JSON
+  function drawSimulatedCandles(grp, lines, W, H, scale_f, chartBounds) {
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STEP 1 — Determine the price-area bounding box in SVG pixel coords
+    // ══════════════════════════════════════════════════════════════════════
+    // Strategy (priority order):
+    //  A) AI returned explicit chart_top_pct / chart_bot_pct  → use directly
+    //  B) AI returned price_max / price_min → derive bounds from line y_pct values
+    //     using the formula:  y_pct = top + (max-price)/(max-min)*(bot-top)
+    //     Solve for top & bot given at least 2 lines with known prices
+    //  C) Pure fallback → use line y_pct spread with generous margins
+
+    var topPct, botPct;
+
+    // Helper: extract numeric price from a line label, e.g. "Suporte — 27.74" → 27.74
+    function labelPrice(l) {
+      if (!l || !l.label) return null;
+      var m = l.label.match(/([\d]+[.,][\d]+)/);
+      return m ? parseFloat(m[1].replace(',', '.')) : null;
+    }
+
+    if (chartBounds && chartBounds.chart_top_pct != null && chartBounds.chart_bot_pct != null) {
+      // ── A: AI gave us the bounds directly ──────────────────────────────
+      topPct = parseFloat(chartBounds.chart_top_pct);
+      botPct = parseFloat(chartBounds.chart_bot_pct);
+
+    } else if (chartBounds && chartBounds.price_max != null && chartBounds.price_min != null && lines.length >= 2) {
+      // ── B: Calibrate from price labels vs y_pct ────────────────────────
+      // y_pct = topPct + (priceMax - price) / (priceMax - priceMin) * (botPct - topPct)
+      // Collect lines that have both y_pct and a readable price label
+      var priceMax = parseFloat(chartBounds.price_max);
+      var priceMin = parseFloat(chartBounds.price_min);
+      var pRange   = priceMax - priceMin;
+      if (pRange > 0) {
+        // For each line we get: y_pct = topPct + (priceMax-price)/pRange * span
+        // where span = botPct - topPct
+        // Let a = topPct, b = span.  y = a + k*b  where k=(priceMax-price)/pRange
+        // Least squares over all lines with known prices
+        var sumK = 0, sumY = 0, sumK2 = 0, sumKY = 0, n = 0;
+        lines.forEach(function(l) {
+          var price = labelPrice(l);
+          if (price == null) return;
+          var k = (priceMax - price) / pRange;
+          var y = parseFloat(l.y_pct);
+          if (isNaN(y) || k < 0 || k > 1) return;
+          sumK += k; sumY += y; sumK2 += k*k; sumKY += k*y; n++;
+        });
+        if (n >= 2) {
+          var det = n*sumK2 - sumK*sumK;
+          if (Math.abs(det) > 1e-6) {
+            var a = (sumY*sumK2 - sumK*sumKY) / det;  // topPct
+            var b = (n*sumKY   - sumK*sumY)   / det;  // span = botPct-topPct
+            topPct = Math.max(0, Math.min(30, a));
+            botPct = Math.min(95, Math.max(topPct + 10, a + b));
+          }
+        }
+      }
+    }
+
+    // ── C: Fallback using lines y_pct spread ───────────────────────────────
+    if (topPct == null || botPct == null) {
+      var yPcts = lines.map(function(l){ return parseFloat(l.y_pct) || 50; });
+      var minY  = Math.min.apply(null, yPcts);
+      var maxY  = Math.max.apply(null, yPcts);
+      // Typical TradingView: price area starts ~5-8% from top (toolbar)
+      // and ends ~65-70% (before RSI/MACD panels).
+      // Use the lines spread and extend symmetrically by 10% of the range.
+      var margin = Math.max(8, (maxY - minY) * 0.25);
+      topPct = Math.max(3,  minY - margin);
+      botPct = Math.min(88, maxY + margin);
+    }
+
+    var chartTopY = (topPct / 100) * H;
+    var chartBotY = (botPct / 100) * H;
+    var chartH    = chartBotY - chartTopY;
+    // Sanity: minimum viable chart height = 15% of total image
+    if (chartH < H * 0.15) {
+      chartTopY = H * 0.06;
+      chartBotY = H * 0.70;
+      chartH    = chartBotY - chartTopY;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STEP 2 — Find anchor lines (entry, TP, SL) and direction
+    // ══════════════════════════════════════════════════════════════════════
+    var entryLine = null, tpLine = null, slLine = null;
+    lines.forEach(function(l) {
+      var t = (l.type || '').toLowerCase();
+      if (t === 'entrada' && !entryLine) entryLine = l;
+      if (t === 'tp'      && !tpLine)    tpLine    = l;
+      if (t === 'sl'      && !slLine)    slLine    = l;
+    });
+
+    // Determine bullish / bearish from TP vs entry direction
+    var isBullish = true;
+    if (entryLine && tpLine) {
+      isBullish = parseFloat(tpLine.y_pct) < parseFloat(entryLine.y_pct);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STEP 3 — Map y_pct → normalised position within the chart area
+    // ══════════════════════════════════════════════════════════════════════
+    // norm=0 → chartTopY (highest price), norm=1 → chartBotY (lowest price)
+    function yPctToNorm(p) {
+      var yPx = (p / 100) * H;
+      return (yPx - chartTopY) / chartH;
+    }
+    function normToY(n) { return chartTopY + n * chartH; }
+
+    // Clamp norms to [0.03, 0.97] so candles never escape the chart area
+    function safeNorm(p) { return Math.max(0.03, Math.min(0.97, yPctToNorm(p))); }
+
+    var entryYPct = entryLine ? parseFloat(entryLine.y_pct)
+                              : topPct + (botPct - topPct) * 0.55;
+    var tpYPct    = tpLine    ? parseFloat(tpLine.y_pct)
+                              : (isBullish
+                                  ? topPct + (botPct - topPct) * 0.20
+                                  : topPct + (botPct - topPct) * 0.80);
+
+    var normEntry = safeNorm(entryYPct);
+    var normTP    = safeNorm(tpYPct);
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STEP 4 — Auto-size candles relative to chart area
+    // ══════════════════════════════════════════════════════════════════════
+    var NUM_CANDLES = 10;
+
+    // Candle zone: rightmost 26% of image width, with a small margin
+    var rightMargin = Math.round(W * 0.02);
+    var zoneW       = Math.round(W * 0.26);
+    var zoneX       = W - zoneW - rightMargin;
+
+    // Gap and body width derived from zone and chart height so candles
+    // look proportional regardless of image resolution
+    var candleGap = Math.round(zoneW / NUM_CANDLES);
+    var candleW   = Math.max(Math.round(candleGap * 0.55), Math.round(3 * scale_f));
+    var wickW     = Math.max(1, Math.round(scale_f * 0.9));
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STEP 5 — Generate OHLC with realistic noise constrained to chart area
+    // ══════════════════════════════════════════════════════════════════════
+    var candles   = [];
+    var cur       = normEntry;
+    var totalMove = normTP - normEntry;
+    // Noise amplitude: smaller when chart area is narrow relative to move
+    var noiseScale = Math.min(0.18, Math.abs(totalMove) * 0.5 + 0.04);
+
+    for (var ci = 0; ci < NUM_CANDLES; ci++) {
+      var progress = ci / (NUM_CANDLES - 1);
+      var smooth   = progress * progress * (3 - 2 * progress); // ease-in-out
+      var target   = normEntry + totalMove * smooth;
+      var noise    = (Math.random() - 0.45) * Math.abs(totalMove) * noiseScale;
+      var close    = Math.max(0.03, Math.min(0.97, target + noise));
+      var open     = cur;
+      var bodyAbs  = Math.abs(close - open);
+      // Wicks: 30–60% of body, always within chart bounds
+      var wickUp   = bodyAbs * (0.30 + Math.random() * 0.45);
+      var wickDown = bodyAbs * (0.30 + Math.random() * 0.45);
+      var high     = Math.max(0.02, Math.min(open, close) - Math.max(wickUp,  0.003));
+      var low      = Math.min(0.98, Math.max(open, close) + Math.max(wickDown, 0.003));
+      candles.push({ o: open, h: high, l: low, c: close });
+      cur = close;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STEP 6 — Render SVG elements
+    // ══════════════════════════════════════════════════════════════════════
+    var FILL_BULL   = '#a855f7';
+    var FILL_BEAR   = '#6d28d9';
+    var STROKE_COL  = '#e9d5ff';
+
+    candles.forEach(function(c, i) {
+      var xCenter    = zoneX + i * candleGap + Math.round(candleGap / 2);
+      var x0         = xCenter - Math.round(candleW / 2);
+      var openY      = normToY(c.o);
+      var closeY     = normToY(c.c);
+      var highY      = normToY(c.h);
+      var lowY       = normToY(c.l);
+      var isBull     = c.c <= c.o;   // SVG: lower Y = higher price
+      var bodyTop    = Math.min(openY, closeY);
+      var bodyBot    = Math.max(openY, closeY);
+      var bodyH      = Math.max(wickW * 1.5, bodyBot - bodyTop);
+      var delay      = (0.5 + i * 0.07).toFixed(2);
+
+      // Wick (full high-to-low)
+      var wick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      wick.setAttribute('x1', xCenter); wick.setAttribute('y1', highY);
+      wick.setAttribute('x2', xCenter); wick.setAttribute('y2', lowY);
+      wick.setAttribute('stroke', STROKE_COL);
+      wick.setAttribute('stroke-width', wickW);
+      wick.setAttribute('stroke-opacity', '0.65');
+      wick.style.opacity = '0';
+      wick.style.animation = 'fadeInEl 0.2s ' + delay + 's ease forwards';
+      grp.appendChild(wick);
+
+      // Body
+      var body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      body.setAttribute('x', x0);
+      body.setAttribute('y', bodyTop);
+      body.setAttribute('width', candleW);
+      body.setAttribute('height', bodyH);
+      body.setAttribute('rx', Math.max(1, Math.round(1.5 * scale_f)));
+      body.setAttribute('fill', isBull ? FILL_BULL : FILL_BEAR);
+      body.setAttribute('fill-opacity', '0.78');
+      body.setAttribute('stroke', STROKE_COL);
+      body.setAttribute('stroke-width', (0.6 * scale_f).toFixed(2));
+      body.setAttribute('stroke-opacity', '0.85');
+      body.style.opacity = '0';
+      body.style.animation = 'fadeInEl 0.25s ' + (parseFloat(delay) + 0.05).toFixed(2) + 's ease forwards';
+      grp.appendChild(body);
+    });
+
+    // Legend entry
+    var leg = document.getElementById('overlay-legend');
+    var row = document.createElement('div');
+    row.className = 'legend-row';
+    var lineDiv = document.createElement('div');
+    lineDiv.className = 'legend-line';
+    lineDiv.style.background = 'linear-gradient(90deg,#a855f7,#6d28d9)';
+    lineDiv.style.height = '8px'; lineDiv.style.borderRadius = '2px';
+    row.appendChild(lineDiv);
+    var span = document.createElement('span');
+    span.textContent = 'Candles Simulados';
+    span.style.color = '#d8b4fe';
+    row.appendChild(span);
+    leg.appendChild(row);
   }
 
   // ── Zoom / Pan ────────────────────────────────────────────────────────────────
